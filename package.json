@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "b": "yarn install",
-    "yarn_cache": "rm -rf node_modules yarn.lock && yarn cache clean",
+    "cache": "rm -rf node_modules yarn.lock && yarn cache clean",
     "new_module": "nest g module",
     "new_service": "nest g service",
     "new_api": "nest g resource",
