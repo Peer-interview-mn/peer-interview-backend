@@ -24,10 +24,10 @@ $ yarn start:prod
 ## Helping commands
 
 ```bash
-# download to node_modules
+# download node_modules
 $ yarn b
 
-# delete to node_modules and cache clean
+# delete node_modules and cache clean
 $ yarn cache
 
 # generate new module
