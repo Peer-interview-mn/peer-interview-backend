@@ -7,7 +7,7 @@ import { UsersModule } from './users/users.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
-// import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -18,12 +18,12 @@ import { join } from 'path';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       context: ({ req }) => ({ headers: req.headers }),
     }),
-    // MongooseModule.forRootAsync({
-    //   useFactory: (configService: ConfigService) => ({
-    //     uri: configService.get<string>('mongo_uri'),
-    //   }),
-    //   inject: [ConfigService],
-    // }),
+    MongooseModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('mongo_uri'),
+      }),
+      inject: [ConfigService],
+    }),
     UsersModule,
   ],
   controllers: [AppController],

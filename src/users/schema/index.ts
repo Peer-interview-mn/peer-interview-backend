@@ -12,7 +12,7 @@ export class User {
   @Field(() => String, { nullable: true })
   user_name: string;
 
-  @Prop({ default: false })
+  @Prop()
   @Field(() => Boolean)
   isAdmin: boolean;
 
