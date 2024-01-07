@@ -4,17 +4,25 @@ import * as bcrypt from 'bcrypt';
 
 @Schema({ timestamps: true })
 @ObjectType()
-export class User {
-  @Field(() => String)
-  _id: string;
-
+export class Social {
   @Prop()
   @Field(() => String, { nullable: true })
   user_name: string;
+}
 
-  @Prop({ default: false })
-  @Field(() => Boolean)
-  isAdmin: boolean;
+@Schema({ timestamps: true })
+@ObjectType()
+export class User {
+  // @Field(() => String)
+  // _id: string;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  name: string;
+
+  @Prop({ default: 'user' })
+  @Field(() => String, { nullable: true })
+  role: string;
 
   @Prop({
     unique: true,
@@ -28,12 +36,33 @@ export class User {
   @Field(() => String)
   password: string;
 
+  @Prop()
+  @Field(() => String, { nullable: true })
+  phone: string;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  opt_code: string;
+
+  @Prop()
+  @Field(() => Date, { nullable: true })
+  opt_expire: Date;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  googleId: string;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  socials: string[];
+
   async comparePassword(enteredPassword: string): Promise<boolean> {
     return bcrypt.compareSync(enteredPassword, this.password);
   }
 }
 export const UserSchema = SchemaFactory.createForClass(User);
 
+UserSchema.index({ email: 1 });
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) next();
   const salt = await bcrypt.genSalt(10);

@@ -8,9 +8,14 @@ import { UpdateUserInput } from './dto/update-user.input';
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @Mutation(() => User)
-  createUser(@Args('createUserInput') createUserInput: CreateUserInput) {
-    return this.usersService.create(createUserInput);
+  // @Mutation(() => User, { name: 'register' })
+  // register(@Args('registerInput') createUserInput: CreateUserInput) {
+  //   return this.usersService.create(createUserInput);
+  // }
+
+  @Mutation(() => User, { name: 'login' })
+  login(@Args('loginInput') loginInput: CreateUserInput) {
+    return this.usersService.create(loginInput);
   }
 
   @Query(() => [User], { name: 'users' })
@@ -19,7 +24,7 @@ export class UsersResolver {
   }
 
   @Query(() => User, { name: 'user' })
-  findOne(@Args('id', { type: () => Int }) id: number) {
+  findOne(@Args('id', { type: () => String }) id: string) {
     return this.usersService.findOne(id);
   }
 
@@ -29,7 +34,7 @@ export class UsersResolver {
   }
 
   @Mutation(() => User)
-  removeUser(@Args('id', { type: () => Int }) id: number) {
+  removeUser(@Args('id', { type: () => String }) id: string) {
     return this.usersService.remove(id);
   }
 }

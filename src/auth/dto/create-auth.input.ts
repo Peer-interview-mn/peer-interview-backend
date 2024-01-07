@@ -1,7 +1,7 @@
 import { InputType, Field } from '@nestjs/graphql';
 
 @InputType()
-export class CreateUserInput {
+export class CreateAuthInput {
   @Field(() => String, { nullable: true })
   name: string;
 
@@ -14,6 +14,6 @@ export class CreateUserInput {
   @Field(() => String, { nullable: true })
   role: string;
 
-  @Field(() => [String], { nullable: true })
-  socials?: string[];
+  // @Field(() => [String], { nullable: true })
+  // socials: string[];
 }
