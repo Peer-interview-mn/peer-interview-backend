@@ -45,6 +45,16 @@ export class UsersService {
     return user;
   }
 
+  async forgotPassword(email: string) {
+    const user = await this.userModel.findOne({ email: email }).exec();
+
+    if (!user)
+      throw new GraphQLError('not found', {
+        extensions: { code: 'Error ' },
+      });
+    return user;
+  }
+
   async findOneCheck(email: string) {
     const user = await this.userModel
       .findOne({ email: email })

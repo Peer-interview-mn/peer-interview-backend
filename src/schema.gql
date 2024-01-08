@@ -3,13 +3,15 @@
 # ------------------------------------------------------
 
 type User {
+  _id: String!
   name: String
   role: String
   email: String!
   password: String!
   phone: String
-  opt_code: String
-  opt_expire: DateTime
+  verifyAccount: Boolean
+  account_verify_code: String
+  avc_expire: DateTime
   googleId: String
   socials: String
 }
@@ -24,23 +26,22 @@ type UserResponse {
   token: String!
 }
 
+type MailResponse {
+  success: Boolean!
+}
+
 type Query {
   users: [User!]!
   user(id: String!): User!
 }
 
 type Mutation {
-  login(loginInput: CreateAuthInput!): UserResponse!
   updateUser(updateUserInput: UpdateUserInput!): User!
   removeUser(id: String!): User!
-  register(singUpInput: CreateAuthInput!): UserResponse!
-}
-
-input CreateAuthInput {
-  name: String
-  email: String!
-  password: String!
-  role: String
+  register(singUpInput: CreateAuthInput!): User!
+  login(loginInput: CreateAuthInput!): UserResponse!
+  sendVerifyMail(emailInput: EmailInput!): MailResponse!
+  confirm_account(emailInput: EmailInput!): UserResponse!
 }
 
 input UpdateUserInput {
@@ -50,4 +51,16 @@ input UpdateUserInput {
   role: String
   socials: [String!]
   id: String!
+}
+
+input CreateAuthInput {
+  name: String
+  email: String!
+  password: String!
+  role: String
+}
+
+input EmailInput {
+  email: String
+  code: String
 }

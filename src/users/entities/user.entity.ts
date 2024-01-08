@@ -13,8 +13,8 @@ export class Social {
 @Schema({ timestamps: true })
 @ObjectType()
 export class User {
-  // @Field(() => String)
-  // _id: string;
+  @Field(() => String)
+  _id: string;
 
   @Prop()
   @Field(() => String, { nullable: true })
@@ -40,13 +40,17 @@ export class User {
   @Field(() => String, { nullable: true })
   phone: string;
 
+  @Prop({ default: false })
+  @Field(() => Boolean, { nullable: true })
+  verifyAccount: boolean;
+
   @Prop()
   @Field(() => String, { nullable: true })
-  opt_code: string;
+  account_verify_code: string;
 
   @Prop()
   @Field(() => Date, { nullable: true })
-  opt_expire: Date;
+  avc_expire: Date;
 
   @Prop()
   @Field(() => String, { nullable: true })

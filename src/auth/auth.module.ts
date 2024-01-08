@@ -4,6 +4,7 @@ import { AuthResolver } from './auth.resolver';
 import { UsersModule } from '@/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -17,6 +18,23 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         },
       }),
       inject: [ConfigService],
+    }),
+    MailerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('smtp.host'),
+          port: configService.get<string>('smtp.port'),
+          secure: false,
+          auth: {
+            user: configService.get<string>('smtp.user'),
+            pass: configService.get<string>('smtp.pass'),
+          },
+        },
+        defaults: {
+          from: configService.get<string>('smtp.from'),
+        },
+      }),
     }),
   ],
   providers: [AuthResolver, AuthService],

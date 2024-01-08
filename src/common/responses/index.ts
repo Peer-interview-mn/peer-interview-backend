@@ -8,3 +8,9 @@ export class UserResponse {
   @Field(() => String)
   token: string;
 }
+
+@ObjectType()
+export class MailResponse {
+  @Field(() => Boolean)
+  success: boolean;
+}
