@@ -8,6 +8,31 @@
 $ yarn install or yarn b
 ```
 
+
+## Help env
+step 1: Create .env
+```bash
+touch .env
+```
+setup environment: copy to .env
+```bash
+PORT=8000
+
+#MONGO_URI=mongodb://root:root@localhost:27001
+MONGO_URI=mongodb+srv://dashmandalsaikhanbileg:amazon@testamazon.4lbhbua.mongodb.net/interview?retryWrites=true&w=majority
+
+JWT_SECRET=peer_interview_3982fc1a
+JWT_EXPRIRESIN=7d
+
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USER=0041ae855fbe0d
+SMTP_PASSWORD=f7cde9aad7cff8
+
+HOSTMAIL=peer@interview.io
+
+```
+
 ## Running the app
 
 ```bash
