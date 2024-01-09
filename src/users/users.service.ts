@@ -41,8 +41,11 @@ export class UsersService {
   }
 
   async findOne(email: string) {
-    const user = await this.userModel.findOne({ email: email }).exec();
-    return user;
+    return await this.userModel.findOne({ email: email }).exec();
+  }
+
+  async findByFields(fields: any) {
+    return await this.userModel.findOne(fields).exec();
   }
 
   async forgotPassword(email: string) {

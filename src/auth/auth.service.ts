@@ -1,11 +1,16 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateAuthInput, EmailInput } from './dto/create-auth.input';
+import {
+  ChangePasswordInput,
+  CreateAuthInput,
+  EmailInput,
+} from './dto/create-auth.input';
 import { UsersService } from '@/users/users.service';
 import { GraphQLError } from 'graphql/error';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
 import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -95,25 +100,42 @@ export class AuthService {
       user.avc_expire = code.expireDate;
       await user.save();
 
-      await this.mailerService.sendMail({
-        to: email,
-        from: fromMail,
-        subject: 'Mail verify code',
-        text: 'welcome my friend',
-        html: `
+      const sendMail = this.sendMail(
+        email,
+        'Mail verify code',
+        'welcome my friend',
+        `
             <div style="display: flex; align-items: center; justify-content: center; flex-direction: column">
               <h1>Welcome Peer Interview </h1>
               <br><p>your account verify code: ${code.code}</p></br>
             </div>`,
-      });
+      );
+      if (sendMail)
+        return {
+          success: true,
+        };
+
       return {
-        success: true,
+        success: false,
       };
     } catch (e) {
       throw new GraphQLError(e.message, {
         extensions: { code: 'Error' },
       });
     }
+  }
+
+  async sendMail(toMail: string, subject: string, text: string, html: string) {
+    const fromMail = this.configService.get<string>('smtp.from');
+    const send = await this.mailerService.sendMail({
+      to: toMail,
+      from: fromMail,
+      subject: subject,
+      text: text,
+      html: html,
+    });
+
+    return !!send;
   }
 
   async confirmAccount(mailInput: EmailInput) {
@@ -153,6 +175,65 @@ export class AuthService {
         user: user,
         token,
       };
+    } catch (e) {
+      throw new GraphQLError(e.message, {
+        extensions: { code: 'Error' },
+      });
+    }
+  }
+
+  async forgotPassword(email: string) {
+    try {
+      const user = await this.usersService.findOne(email);
+
+      if (!user)
+        throw new GraphQLError(`this ${email} not found`, {
+          extensions: { code: 'Error' },
+        });
+
+      const resetToken = await user.generatePasswordChangeToken();
+      await user.save();
+
+      const link = `https://www.peerinterview.io/changepassword/${resetToken}`;
+      const message = `sain bnu.<br><br>doorh linked darj nuuts ugee solino uu!:<br>${link}`;
+      const sendMail = await this.sendMail(email, 'Solih', 'solih', message);
+
+      if (sendMail)
+        return {
+          success: true,
+        };
+      return false;
+    } catch (e) {
+      throw new GraphQLError(e.message, {
+        extensions: { code: 'Error' },
+      });
+    }
+  }
+
+  async resetPassword(changePasswordInput: ChangePasswordInput) {
+    try {
+      const { newPassword, resetToken } = changePasswordInput;
+
+      const encrypted = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+      const user = await this.usersService.findByFields({
+        resetPasswordToken: encrypted,
+        resetPasswordExpire: { $gt: Date.now() },
+      });
+      if (!user)
+        throw new GraphQLError(`wrong code`, {
+          extensions: { code: 'Error' },
+        });
+
+      user.password = newPassword;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+
+      return user;
     } catch (e) {
       throw new GraphQLError(e.message, {
         extensions: { code: 'Error' },

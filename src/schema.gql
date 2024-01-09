@@ -13,6 +13,8 @@ type User {
   account_verify_code: String
   avc_expire: DateTime
   googleId: String
+  resetPasswordToken: String
+  resetPasswordExpire: DateTime
   socials: String
 }
 
@@ -42,6 +44,8 @@ type Mutation {
   login(loginInput: CreateAuthInput!): UserResponse!
   sendVerifyMail(emailInput: EmailInput!): MailResponse!
   confirm_account(emailInput: EmailInput!): UserResponse!
+  forgot_password(emailInput: EmailInput!): MailResponse!
+  reset_password(changePassInput: ChangePasswordInput!): User!
 }
 
 input UpdateUserInput {
@@ -63,4 +67,9 @@ input CreateAuthInput {
 input EmailInput {
   email: String
   code: String
+}
+
+input ChangePasswordInput {
+  resetToken: String!
+  newPassword: String!
 }

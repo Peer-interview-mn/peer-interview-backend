@@ -1,7 +1,11 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { Auth } from './entities/auth.entity';
-import { CreateAuthInput, EmailInput } from './dto/create-auth.input';
+import {
+  ChangePasswordInput,
+  CreateAuthInput,
+  EmailInput,
+} from './dto/create-auth.input';
 import { MailResponse, UserResponse } from '@/common/responses';
 import { User } from '@/users/entities/user.entity';
 // import { UpdateAuthInput } from './dto/update-auth.input';
@@ -28,5 +32,15 @@ export class AuthResolver {
   @Mutation(() => UserResponse, { name: 'confirm_account' })
   confirmAccount(@Args('emailInput') mailInput: EmailInput) {
     return this.authService.confirmAccount(mailInput);
+  }
+
+  @Mutation(() => MailResponse, { name: 'forgot_password' })
+  forgotPassword(@Args('emailInput') mailInput: EmailInput) {
+    return this.authService.forgotPassword(mailInput.email);
+  }
+
+  @Mutation(() => User, { name: 'reset_password' })
+  resetPassword(@Args('changePassInput') changePassInput: ChangePasswordInput) {
+    return this.authService.resetPassword(changePassInput);
   }
 }

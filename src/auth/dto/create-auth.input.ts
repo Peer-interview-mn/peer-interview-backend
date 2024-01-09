@@ -26,3 +26,12 @@ export class EmailInput {
   @Field(() => String, { nullable: true })
   code: string;
 }
+
+@InputType()
+export class ChangePasswordInput {
+  @Field(() => String)
+  resetToken: string;
+
+  @Field(() => String)
+  newPassword: string;
+}
