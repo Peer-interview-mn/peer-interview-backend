@@ -11,6 +11,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
 import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
 import * as crypto from 'crypto';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -239,5 +240,13 @@ export class AuthService {
         extensions: { code: 'Error' },
       });
     }
+  }
+
+  async googleLogin(req: Request, res: Response) {
+    console.log('user: ', req.user);
+    if (!req.user) {
+      return false;
+    }
+    return true;
   }
 }
