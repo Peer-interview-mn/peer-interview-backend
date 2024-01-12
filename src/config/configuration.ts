@@ -12,4 +12,9 @@ export default () => ({
     pass: process.env.SMTP_PASSWORD,
     from: process.env.HOSTMAIL,
   },
+  google: {
+    id: process.env.GOOGLE_ID,
+    secret: process.env.GOOGLE_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+  },
 });
