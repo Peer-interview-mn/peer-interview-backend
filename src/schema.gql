@@ -4,15 +4,15 @@
 
 type User {
   _id: String!
-  name: String
+  firstName: String
+  lastName: String
   role: String
   email: String!
-  password: String!
+  password: String
   phone: String
   verifyAccount: Boolean
   account_verify_code: String
   avc_expire: DateTime
-  googleId: String
   resetPasswordToken: String
   resetPasswordExpire: DateTime
   socials: String
@@ -49,19 +49,23 @@ type Mutation {
 }
 
 input UpdateUserInput {
-  name: String
+  firstName: String
+  lastName: String
   email: String
   password: String
   role: String
+  phone: String
   socials: [String!]
   id: String!
 }
 
 input CreateAuthInput {
-  name: String
+  firstName: String
+  lastName: String
   email: String!
   password: String!
   role: String
+  phone: String
 }
 
 input EmailInput {

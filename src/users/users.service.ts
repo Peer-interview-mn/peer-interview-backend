@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserInput } from './dto/create-user.input';
+import { CreateUserInput, GoogleUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@/users/entities/user.entity';
@@ -14,6 +14,17 @@ export class UsersService {
   ) {}
 
   async create(createUserInput: CreateUserInput) {
+    try {
+      const user = new this.userModel(createUserInput);
+      return await user.save();
+    } catch (e) {
+      throw new GraphQLError(e.message, {
+        extensions: { code: 'Error' },
+      });
+    }
+  }
+
+  async createGoogleUser(createUserInput: GoogleUserInput) {
     try {
       const user = new this.userModel(createUserInput);
       return await user.save();

@@ -19,7 +19,11 @@ export class User {
 
   @Prop()
   @Field(() => String, { nullable: true })
-  name: string;
+  firstName: string;
+
+  @Prop()
+  @Field(() => String, { nullable: true })
+  lastName: string;
 
   @Prop({ default: 'user' })
   @Field(() => String, { nullable: true })
@@ -33,8 +37,8 @@ export class User {
   @Field(() => String)
   email: string;
 
-  @Prop({ required: true })
-  @Field(() => String)
+  @Prop()
+  @Field(() => String, { nullable: true })
   password: string;
 
   @Prop()
@@ -52,10 +56,6 @@ export class User {
   @Prop()
   @Field(() => Date, { nullable: true })
   avc_expire: Date;
-
-  @Prop()
-  @Field(() => String, { nullable: true })
-  googleId: string;
 
   @Prop()
   @Field(() => String, { nullable: true })
