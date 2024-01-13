@@ -88,12 +88,7 @@ export class AuthService {
         });
 
       if (!checkUser.password) {
-        throw new GraphQLError(
-          'This account has not created a passport. If you want to log in using a passport, please log in with Google and create a passport',
-          {
-            extensions: { code: 'Error' },
-          },
-        );
+        throw new UnauthorizedException('email or password wrong');
       }
 
       const pass = await checkUser.comparePassword(password);

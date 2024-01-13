@@ -11,7 +11,7 @@ export class CreateUserInput {
   @Field(() => String)
   email: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   password: string;
 
   @Field(() => String, { nullable: true })
@@ -22,6 +22,9 @@ export class CreateUserInput {
 
   @Field(() => [String], { nullable: true })
   socials?: string[];
+
+  @Field(() => String, { nullable: true })
+  profileImg: string;
 }
 
 @InputType()
@@ -31,4 +34,13 @@ export class GoogleUserInput {
 
   @Field(() => Boolean, { nullable: true, defaultValue: true })
   verifyAccount: boolean;
+
+  @Field(() => String, { nullable: true })
+  firstName: string;
+
+  @Field(() => String, { nullable: true })
+  lastName: string;
+
+  @Field(() => String, { nullable: true })
+  profileImg: string;
 }

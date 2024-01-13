@@ -25,6 +25,13 @@ export class User {
   @Field(() => String, { nullable: true })
   lastName: string;
 
+  @Prop({
+    default:
+      'https://placehold.co/150X150/EEE/31343C?font=playfair-display&text=U',
+  })
+  @Field(() => String, { nullable: true })
+  profileImg: string;
+
   @Prop({ default: 'user' })
   @Field(() => String, { nullable: true })
   role: string;

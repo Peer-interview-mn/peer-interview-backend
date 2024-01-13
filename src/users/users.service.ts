@@ -77,8 +77,29 @@ export class UsersService {
     return user;
   }
 
-  update(id: string, updateUserInput: UpdateUserInput) {
-    return `This action updates a #${id} user`;
+  async update(id: string, updateUserInput: UpdateUserInput) {
+    delete updateUserInput['id'];
+    try {
+      const user = await this.userModel.findById(id).select('+password').exec();
+      if (!user)
+        throw new GraphQLError('not found', {
+          extensions: { code: 'Error ' },
+        });
+
+      if (updateUserInput.password && user.password) {
+        throw new GraphQLError('you cannot change your passport directly', {
+          extensions: { code: 'Error ' },
+        });
+      }
+
+      Object.assign(user, updateUserInput);
+      await user.save();
+      return user;
+    } catch (e) {
+      throw new GraphQLError(e.message, {
+        extensions: { code: 'Error' },
+      });
+    }
   }
 
   remove(id: string) {

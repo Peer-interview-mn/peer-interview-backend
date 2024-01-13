@@ -48,6 +48,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const createUser: GoogleUserInput = {
       email: emails[0].value,
       verifyAccount: true,
+      firstName: name.givenName,
+      lastName: name.familyName,
+      profileImg: photos[0].value,
     };
 
     const newUser = await this.authService.googleUser(createUser);

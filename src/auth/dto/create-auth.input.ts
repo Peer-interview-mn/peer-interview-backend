@@ -20,6 +20,9 @@ export class CreateAuthInput {
   @Field(() => String, { nullable: true })
   phone: string;
 
+  @Field(() => String, { nullable: true })
+  profileImg: string;
+
   // @Field(() => [String], { nullable: true })
   // socials: string[];
 }
@@ -31,6 +34,15 @@ export class GoogleUserInput {
 
   @Field(() => Boolean, { nullable: true, defaultValue: true })
   verifyAccount: boolean;
+
+  @Field(() => String, { nullable: true })
+  firstName: string;
+
+  @Field(() => String, { nullable: true })
+  lastName: string;
+
+  @Field(() => String, { nullable: true })
+  profileImg: string;
 }
 
 @InputType()
