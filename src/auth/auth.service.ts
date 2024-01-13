@@ -7,11 +7,12 @@ import {
 import { UsersService } from '@/users/users.service';
 import { GraphQLError } from 'graphql/error';
 import { JwtService } from '@nestjs/jwt';
-import { MailerService } from '@nestjs-modules/mailer';
+// import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
 import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
 import * as crypto from 'crypto';
 import { Request, Response } from 'express';
+import { MailerService } from '@/mailer/mailer.service';
 
 @Injectable()
 export class AuthService {
@@ -82,7 +83,6 @@ export class AuthService {
   async sendVerifyCodeToMail(mailInput: EmailInput) {
     const { email } = mailInput;
     try {
-      const fromMail = this.configService.get<string>('smtp.from');
       const user = await this.usersService.findOne(email);
 
       if (!user)
@@ -101,16 +101,16 @@ export class AuthService {
       user.avc_expire = code.expireDate;
       await user.save();
 
-      const sendMail = this.sendMail(
-        email,
-        'Mail verify code',
-        'welcome my friend',
-        `
-            <div style="display: flex; align-items: center; justify-content: center; flex-direction: column">
-              <h1>Welcome Peer Interview </h1>
-              <br><p>your account verify code: ${code.code}</p></br>
-            </div>`,
-      );
+      const sendMail = this.mailerService.sendMail({
+        toMail: email,
+        subject: 'Mail verify code',
+        text: 'welcome my friend',
+        html: `
+        <div style="display: flex; align-items: center; justify-content: center; flex-direction: column">
+          <h1>Welcome Peer Interview </h1>
+          <br><p>your account verify code: ${code.code}</p></br>
+        </div>`,
+      });
       if (sendMail)
         return {
           success: true,
@@ -126,18 +126,16 @@ export class AuthService {
     }
   }
 
-  async sendMail(toMail: string, subject: string, text: string, html: string) {
-    const fromMail = this.configService.get<string>('smtp.from');
-    const send = await this.mailerService.sendMail({
-      to: toMail,
-      from: fromMail,
-      subject: subject,
-      text: text,
-      html: html,
-    });
+  // async sendMail(toMail: string, subject: string, text: string, html: string) {
+  //   const send = await this.mailerService.sendMail({
+  //     toMail: toMail,
+  //     subject: subject,
+  //     text: text,
+  //     html: html,
+  //   });
 
-    return !!send;
-  }
+  //   return !!send;
+  // }
 
   async confirmAccount(mailInput: EmailInput) {
     const { email, code } = mailInput;
@@ -197,13 +195,20 @@ export class AuthService {
 
       const link = `https://www.peerinterview.io/changepassword/${resetToken}`;
       const message = `sain bnu.<br><br>doorh linked darj nuuts ugee solino uu!:<br>${link}`;
-      const sendMail = await this.sendMail(email, 'Solih', 'solih', message);
+      const sendMail = await this.mailerService.sendMail({
+        toMail: email,
+        subject: 'Solih',
+        text: 'solih',
+        html: message,
+      });
 
       if (sendMail)
         return {
           success: true,
         };
-      return false;
+      return {
+        success: false,
+      };
     } catch (e) {
       throw new GraphQLError(e.message, {
         extensions: { code: 'Error' },
