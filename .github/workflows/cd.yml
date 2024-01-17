@@ -1,0 +1,46 @@
+name: CD PeerInterview
+
+on:
+  workflow_run:
+    workflows: ['CI PeerInterview']
+    types:
+      - completed
+
+jobs:
+  build:
+    runs-on: peer-interview
+    steps:
+      - name: Pull docker image
+        run: sudo docker pull saikhnaa21/peer-interview:latest
+      - name: Delete Old docker container
+        run: sudo docker rm -f peer-interview-container || true
+      - name: Run Docker Container
+        env:
+          PORT: ${{secrets.PORT}}
+          MONGO_URI: ${{secrets.MONGO_URI}}
+          JWT_SECRET: ${{secrets.JWT_SECRET}}
+          JWT_EXPRIRESIN: ${{secrets.SMTP_HOST}}
+          SMTP_HOST: ${{secrets.REF_SECRET}}
+          SMTP_PORT: ${{secrets.SMTP_PORT}}
+          SMTP_USER: ${{secrets.SMTP_USER}}
+          SMTP_PASSWORD: ${{secrets.SMTP_PASSWORD}}
+          GOOGLE_ID: ${{secrets.GOOGLE_ID}}
+          GOOGLE_SECRET: ${{secrets.GOOGLE_SECRET}}
+          GOOGLE_CALLBACK_URL: ${{secrets.GOOGLE_CALLBACK_URL}}
+          HOSTMAIL: ${{secrets.HOSTMAIL}}
+        run: >
+          sudo docker run -d
+          -e PORT=$PORT
+          -e MONGO_URI=$MONGO_URI
+          -e JWT_SECRET=$JWT_SECRET
+          -e JWT_EXPRIRESIN=$JWT_EXPRIRESIN
+          -e SMTP_HOST=$SMTP_HOST
+          -e SMTP_PORT=$SMTP_PORT
+          -e SMTP_USER=$SMTP_USER
+          -e SMTP_PASSWORD=$SMTP_PASSWORD
+          -e GOOGLE_ID=$GOOGLE_ID
+          -e GOOGLE_SECRET=$GOOGLE_SECRET
+          -e GOOGLE_CALLBACK_URL=$GOOGLE_CALLBACK_URL
+          -e HOSTMAIL=$HOSTMAIL -p 80:8000 --name peer-interview-container saikhnaa21/peer-interview
+      - name: Cleanup unused images
+        run: sudo docker image prune --force
