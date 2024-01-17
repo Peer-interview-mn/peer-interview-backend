@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: peer-interview
+    runs-on: [peer-interview]
     steps:
       - name: Pull docker image
         run: sudo docker pull saikhnaa21/peer-interview:latest
