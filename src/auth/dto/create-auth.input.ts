@@ -2,10 +2,10 @@ import { InputType, Field } from '@nestjs/graphql';
 
 @InputType()
 export class CreateAuthInput {
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   firstName: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   lastName: string;
 
   @Field(() => String)

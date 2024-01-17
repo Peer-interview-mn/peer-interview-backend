@@ -41,14 +41,18 @@ export class UsersService {
   }
 
   async findOneId(id: string) {
-    const user = await this.userModel.findById(id).exec();
+    try {
+      const user = await this.userModel.findById(id);
 
-    if (!user)
-      throw new GraphQLError('not found', {
-        extensions: { code: 'Error ' },
-      });
+      if (!user)
+        throw new GraphQLError('not found', {
+          extensions: { code: 'Error ' },
+        });
 
-    return user;
+      return user;
+    } catch (e) {
+      return e.message;
+    }
   }
 
   async findOne(email: string) {

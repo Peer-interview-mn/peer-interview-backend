@@ -16,7 +16,7 @@ export class AuthResolver {
 
   @Mutation(() => User, { name: 'register' })
   register(@Args('singUpInput') createAuthInput: CreateAuthInput) {
-    return this.authService.create(createAuthInput);
+    return this.authService.register(createAuthInput);
   }
 
   @Mutation(() => UserResponse, { name: 'login' })
@@ -26,7 +26,7 @@ export class AuthResolver {
 
   @Mutation(() => MailResponse, { name: 'sendVerifyMail' })
   sendVerifyMail(@Args('emailInput') mailInput: EmailInput) {
-    return this.authService.sendVerifyCodeToMail(mailInput);
+    return this.authService.sendVerifyCodeToMail(mailInput.email);
   }
 
   @Mutation(() => UserResponse, { name: 'confirm_account' })

@@ -21,7 +21,7 @@ export class AuthService {
     private jwtService: JwtService,
     private mailerService: MailerService,
   ) {}
-  async create(createAuthInput: CreateAuthInput) {
+  async register(createAuthInput: CreateAuthInput) {
     const haveUser = await this.usersService.findOne(createAuthInput.email);
     if (haveUser)
       throw new GraphQLError('already exists', {
@@ -109,8 +109,7 @@ export class AuthService {
     }
   }
 
-  async sendVerifyCodeToMail(mailInput: EmailInput) {
-    const { email } = mailInput;
+  async sendVerifyCodeToMail(email: string) {
     try {
       const user = await this.usersService.findOne(email);
 

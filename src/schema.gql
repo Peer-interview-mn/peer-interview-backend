@@ -62,8 +62,8 @@ input UpdateUserInput {
 }
 
 input CreateAuthInput {
-  firstName: String
-  lastName: String
+  firstName: String!
+  lastName: String!
   email: String!
   password: String!
   role: String
