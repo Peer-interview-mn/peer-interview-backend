@@ -192,7 +192,7 @@ export class AuthService {
       const resetToken = await user.generatePasswordChangeToken();
       await user.save();
 
-      const link = `https://www.peerinterview.io/changepassword/${resetToken}`;
+      const link = `https://www.peerinterview.io/changepassword/?token=${resetToken}`;
       const message = `sain bnu.<br><br>doorh linked darj nuuts ugee solino uu!:<br> <a  href=${link}>${link}</a>`;
       const sendMail = await this.mailerService.sendMail({
         toMail: email,
