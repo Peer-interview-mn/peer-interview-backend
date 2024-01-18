@@ -1,7 +1,1 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql';
-
-@ObjectType()
-export class Mailer {
-  @Field(() => Int, { description: 'Example field (placeholder)' })
-  exampleField: number;
-}
+export class Mailer {}

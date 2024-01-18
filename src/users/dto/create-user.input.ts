@@ -1,46 +1,68 @@
-import { InputType, Field } from '@nestjs/graphql';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 
-@InputType()
 export class CreateUserInput {
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   firstName: string;
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   lastName: string;
 
-  @Field(() => String)
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   email: string;
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   password: string;
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   role: string;
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   phone: string;
 
-  @Field(() => [String], { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   socials?: string[];
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   profileImg: string;
 }
 
-@InputType()
 export class GoogleUserInput {
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   email: string;
 
-  @Field(() => Boolean, { nullable: true, defaultValue: true })
   verifyAccount: boolean;
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   firstName: string;
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   lastName: string;
 
-  @Field(() => String, { nullable: true })
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
   profileImg: string;
 }

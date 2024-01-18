@@ -1,12 +1,17 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   ChangePasswordInput,
   CreateAuthInput,
   EmailInput,
   GoogleUserInput,
+  LoginInput,
 } from './dto/create-auth.input';
 import { UsersService } from '@/users/users.service';
-import { GraphQLError } from 'graphql/error';
 import { JwtService } from '@nestjs/jwt';
 import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
 import * as crypto from 'crypto';
@@ -24,40 +29,28 @@ export class AuthService {
   async register(createAuthInput: CreateAuthInput) {
     const haveUser = await this.usersService.findOne(createAuthInput.email);
     if (haveUser)
-      throw new GraphQLError('already exists', {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException('already exists', HttpStatus.NOT_FOUND);
 
     try {
       const newUser = await this.usersService.create(createAuthInput);
       if (newUser) return newUser;
-      throw new GraphQLError('failed', {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException('failed', HttpStatus.NOT_FOUND);
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
   async googleUser(createAuthInput: GoogleUserInput) {
     const haveUser = await this.usersService.findOne(createAuthInput.email);
     if (haveUser)
-      throw new GraphQLError('already exists', {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException('already exists', HttpStatus.NOT_FOUND);
 
     try {
       const newUser = await this.usersService.createGoogleUser(createAuthInput);
       if (newUser) return newUser;
-      throw new GraphQLError('failed', {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException('failed', HttpStatus.NOT_FOUND);
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -71,21 +64,20 @@ export class AuthService {
     return token;
   }
 
-  async login(loginAuthInput: CreateAuthInput) {
+  async login(loginAuthInput: LoginInput) {
     const { email, password } = loginAuthInput;
 
     try {
       const checkUser = await this.usersService.findOneCheck(email);
 
       if (!checkUser)
-        throw new GraphQLError('invalid user!', {
-          extensions: { code: 'Error' },
-        });
+        throw new HttpException('invalid user', HttpStatus.NOT_FOUND);
 
       if (!checkUser.verifyAccount)
-        throw new GraphQLError('This account has not been verified!', {
-          extensions: { code: 'Error' },
-        });
+        throw new HttpException(
+          'This account has not been verified!',
+          HttpStatus.NOT_FOUND,
+        );
 
       if (!checkUser.password) {
         throw new UnauthorizedException('email or password wrong');
@@ -103,9 +95,7 @@ export class AuthService {
         token,
       };
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -114,14 +104,16 @@ export class AuthService {
       const user = await this.usersService.findOne(email);
 
       if (!user)
-        throw new GraphQLError(`this ${email} not found. pls register`, {
-          extensions: { code: 'Error' },
-        });
+        throw new HttpException(
+          'this ${email} not found. pls register',
+          HttpStatus.NOT_FOUND,
+        );
 
       if (user.verifyAccount)
-        throw new GraphQLError(`this ${email} already verified`, {
-          extensions: { code: 'Error' },
-        });
+        throw new HttpException(
+          `this ${email} already verified`,
+          HttpStatus.NOT_FOUND,
+        );
 
       const code = generateVerifyCode();
 
@@ -148,9 +140,7 @@ export class AuthService {
         success: false,
       };
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -160,20 +150,19 @@ export class AuthService {
       const user = await this.usersService.findOne(email);
 
       if (!user)
-        throw new GraphQLError(`this ${email} not found. pls register`, {
-          extensions: { code: 'Error' },
-        });
+        throw new HttpException(
+          `this ${email} not found. pls register`,
+          HttpStatus.NOT_FOUND,
+        );
 
       if (user.verifyAccount)
-        throw new GraphQLError(`this ${email} already verified`, {
-          extensions: { code: 'Error' },
-        });
+        throw new HttpException(
+          `this ${email} already verified`,
+          HttpStatus.NOT_FOUND,
+        );
 
       const verify = verifyCodeCheck(user, code);
-      if (!verify)
-        throw new GraphQLError(`wrong code`, {
-          extensions: { code: 'Error' },
-        });
+      if (!verify) throw new HttpException(`wrong code`, HttpStatus.NOT_FOUND);
 
       user.verifyAccount = true;
       user.account_verify_code = null;
@@ -186,9 +175,7 @@ export class AuthService {
         token,
       };
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -197,9 +184,10 @@ export class AuthService {
       const user = await this.usersService.findOne(email);
 
       if (!user)
-        throw new GraphQLError(`this ${email} not found`, {
-          extensions: { code: 'Error' },
-        });
+        throw new HttpException(
+          `this ${email} not found`,
+          HttpStatus.NOT_FOUND,
+        );
 
       const resetToken = await user.generatePasswordChangeToken();
       await user.save();
@@ -221,9 +209,7 @@ export class AuthService {
         success: false,
       };
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -240,10 +226,7 @@ export class AuthService {
         resetPasswordToken: encrypted,
         resetPasswordExpire: { $gt: Date.now() },
       });
-      if (!user)
-        throw new GraphQLError(`wrong code`, {
-          extensions: { code: 'Error' },
-        });
+      if (!user) throw new HttpException(`wrong code`, HttpStatus.NOT_FOUND);
 
       user.password = newPassword;
       user.resetPasswordToken = undefined;
@@ -252,9 +235,7 @@ export class AuthService {
 
       return user;
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 

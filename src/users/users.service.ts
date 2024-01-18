@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserInput, GoogleUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@/users/entities/user.entity';
 import { Model } from 'mongoose';
-import { GraphQLError } from 'graphql/error';
 
 @Injectable()
 export class UsersService {
@@ -18,9 +17,7 @@ export class UsersService {
       const user = new this.userModel(createUserInput);
       return await user.save();
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -29,9 +26,7 @@ export class UsersService {
       const user = new this.userModel(createUserInput);
       return await user.save();
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -44,10 +39,7 @@ export class UsersService {
     try {
       const user = await this.userModel.findById(id);
 
-      if (!user)
-        throw new GraphQLError('not found', {
-          extensions: { code: 'Error ' },
-        });
+      if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
       return user;
     } catch (e) {
@@ -66,10 +58,8 @@ export class UsersService {
   async forgotPassword(email: string) {
     const user = await this.userModel.findOne({ email: email }).exec();
 
-    if (!user)
-      throw new GraphQLError('not found', {
-        extensions: { code: 'Error ' },
-      });
+    if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+
     return user;
   }
 
@@ -85,24 +75,20 @@ export class UsersService {
     delete updateUserInput['id'];
     try {
       const user = await this.userModel.findById(id).select('+password').exec();
-      if (!user)
-        throw new GraphQLError('not found', {
-          extensions: { code: 'Error ' },
-        });
+      if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
       if (updateUserInput.password && user.password) {
-        throw new GraphQLError('you cannot change your passport directly', {
-          extensions: { code: 'Error ' },
-        });
+        throw new HttpException(
+          'you cannot change your passport directly',
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       Object.assign(user, updateUserInput);
       await user.save();
       return user;
     } catch (e) {
-      throw new GraphQLError(e.message, {
-        extensions: { code: 'Error' },
-      });
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 

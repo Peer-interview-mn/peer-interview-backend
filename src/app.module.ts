@@ -4,9 +4,6 @@ import config from '@/config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { join } from 'path';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { MailerModule } from './mailer/mailer.module';
@@ -14,12 +11,6 @@ import { MailerModule } from './mailer/mailer.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      playground: true,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      context: ({ req }) => ({ headers: req.headers }),
-    }),
     MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('mongo_uri'),

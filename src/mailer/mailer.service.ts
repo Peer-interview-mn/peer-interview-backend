@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { MailDto } from './dto/create-mailer.input';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { GraphQLError } from 'graphql';
 
 @Injectable()
 export class MailerService {
@@ -38,9 +37,7 @@ export class MailerService {
 
       return !!send;
     } catch (e) {
-      throw new GraphQLError('Failed to send email', {
-        extensions: { code: 'SEND_EMAIL_ERROR' },
-      });
+      return 'Failed to send email';
     } finally {
       transport.close();
     }

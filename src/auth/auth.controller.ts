@@ -15,6 +15,7 @@ import {
   ChangePasswordInput,
   CreateAuthInput,
   EmailInput,
+  LoginInput,
 } from '@/auth/dto/create-auth.input';
 
 @ApiTags('auth')
@@ -38,7 +39,7 @@ export class AuthController {
   }
 
   @Post('sign-in')
-  async login(@Body() createAuthInput: CreateAuthInput) {
+  async login(@Body() createAuthInput: LoginInput) {
     return await this.authService.login(createAuthInput);
   }
 

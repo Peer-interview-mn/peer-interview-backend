@@ -1,39 +1,30 @@
-import { Field, ObjectType } from '@nestjs/graphql';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
 @Schema({ timestamps: true })
-@ObjectType()
 export class Social {
   @Prop()
-  @Field(() => String, { nullable: true })
   user_name: string;
 }
 
 @Schema({ timestamps: true })
-@ObjectType()
 export class User {
-  @Field(() => String)
   _id: string;
 
   @Prop()
-  @Field(() => String, { nullable: true })
   firstName: string;
 
   @Prop()
-  @Field(() => String, { nullable: true })
   lastName: string;
 
   @Prop({
     default:
       'https://placehold.co/150X150/EEE/31343C?font=playfair-display&text=U',
   })
-  @Field(() => String, { nullable: true })
   profileImg: string;
 
   @Prop({ default: 'user' })
-  @Field(() => String, { nullable: true })
   role: string;
 
   @Prop({
@@ -41,39 +32,30 @@ export class User {
     required: true,
     match: /^\w+([\.-]?id\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
   })
-  @Field(() => String)
   email: string;
 
   @Prop()
-  @Field(() => String, { nullable: true })
   password: string;
 
   @Prop()
-  @Field(() => String, { nullable: true })
   phone: string;
 
   @Prop({ default: false })
-  @Field(() => Boolean, { nullable: true })
   verifyAccount: boolean;
 
   @Prop()
-  @Field(() => String, { nullable: true })
   account_verify_code: string;
 
   @Prop()
-  @Field(() => Date, { nullable: true })
   avc_expire: Date;
 
   @Prop()
-  @Field(() => String, { nullable: true })
   resetPasswordToken: string;
 
   @Prop()
-  @Field(() => Date, { nullable: true })
   resetPasswordExpire: Date;
 
   @Prop()
-  @Field(() => String, { nullable: true })
   socials: string[];
 
   async comparePassword(enteredPassword: string): Promise<boolean> {
