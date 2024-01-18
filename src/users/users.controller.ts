@@ -18,7 +18,7 @@ export class UsersController {
     return await this.usersService.findOneId(id);
   }
 
-  @Patch('userId')
+  @Patch(':userId')
   async updateUser(
     @Param('userId') id: string,
     @Body() updateUserInput: UpdateUserInput,
