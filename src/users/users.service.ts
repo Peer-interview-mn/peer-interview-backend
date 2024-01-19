@@ -38,7 +38,6 @@ export class UsersService {
   async findOneId(id: string) {
     try {
       const user = await this.userModel.findById(id);
-
       if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
       return user;

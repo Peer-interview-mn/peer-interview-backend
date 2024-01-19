@@ -95,3 +95,10 @@ export class ChangePasswordInput {
   @IsString({ message: 'The description must be a string' })
   newPassword: string;
 }
+
+export class ResetTokenInput {
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
+  refresh_token: string;
+}

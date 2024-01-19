@@ -6,6 +6,7 @@ import {
   CreateAuthInput,
   EmailInput,
   LoginInput,
+  ResetTokenInput,
 } from '@/auth/dto/create-auth.input';
 
 @ApiTags('auth')
@@ -46,5 +47,12 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() changePassInput: ChangePasswordInput) {
     return await this.authService.resetPassword(changePassInput);
+  }
+
+  @Post('login-with-refresh-token')
+  async refToken(@Body() resetToken: ResetTokenInput) {
+    return await this.authService.loginWithRefreshToken(
+      resetToken.refresh_token,
+    );
   }
 }

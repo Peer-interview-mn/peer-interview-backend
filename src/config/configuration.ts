@@ -5,6 +5,10 @@ export default () => ({
     jwt_secret: process.env.JWT_SECRET,
     jwt_expires_in: process.env.JWT_EXPRIRESIN,
   },
+  ref: {
+    secret: process.env.REF_SECRET,
+    expires_in: process.env.REF_EXPRIRESIN,
+  },
   smtp: {
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,

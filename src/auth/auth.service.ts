@@ -60,7 +60,8 @@ export class AuthService {
 
         const newUser = await this.googleUser(createUser);
         const accessToken = await this.generateJwtToken(newUser);
-        return { access_token: accessToken };
+        const refreshToken = await this.generateRefToken(newUser);
+        return { access_token: accessToken, refresh_token: refreshToken };
       }
 
       throw new BadRequestException(
@@ -119,8 +120,27 @@ export class AuthService {
       email: user.email,
       _id: user._id,
       role: user.systemRole,
+      firstName: user.firstName,
     };
     const token = await this.jwtService.signAsync(payload);
+    return token;
+  }
+
+  async generateRefToken(user: User) {
+    const secret = this.configService.get<string>('ref.secret');
+    const expiresIn = this.configService.get<string>('ref.expires_in');
+    const payload = {
+      email: user.email,
+      sub: user._id,
+      role: user.systemRole,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profileImg: user.profileImg,
+    };
+    const token = await this.jwtService.signAsync(payload, {
+      secret,
+      expiresIn,
+    });
     return token;
   }
 
@@ -150,10 +170,8 @@ export class AuthService {
       }
 
       const token = await this.generateJwtToken(checkUser);
-      return {
-        user: checkUser,
-        token,
-      };
+      const refreshToken = await this.generateRefToken(checkUser);
+      return { access_token: token, refresh_token: refreshToken };
     } catch (e) {
       throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
@@ -230,10 +248,8 @@ export class AuthService {
       await user.save();
 
       const token = await this.generateJwtToken(user);
-      return {
-        user: user,
-        token,
-      };
+      const refreshToken = await this.generateRefToken(user);
+      return { access_token: token, refresh_token: refreshToken };
     } catch (e) {
       throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
@@ -299,11 +315,22 @@ export class AuthService {
     }
   }
 
-  async googleLogin(req: Request, res: Response) {
-    console.log('user: ', req.user);
-    if (!req.user) {
-      res.json({ failed: true });
+  async loginWithRefreshToken(refToken: string) {
+    try {
+      const secret = this.configService.get<string>('ref.secret');
+      const subs = await this.jwtService.verifyAsync(refToken, {
+        secret,
+      });
+
+      const user = await this.usersService.findOneId(subs.sub);
+      if (!user) throw new HttpException('invalid user', HttpStatus.NOT_FOUND);
+
+      const access_token = await this.generateJwtToken(user);
+      return {
+        access_token,
+      };
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
-    res.json(req.user);
   }
 }
