@@ -52,7 +52,10 @@ export class UsersService {
   }
 
   async findByUserName(userName: string) {
-    return await this.userModel.findOne({ userName: userName }).exec();
+    const user = await this.userModel.findOne({ userName: userName }).exec();
+
+    if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+    return user;
   }
 
   async findByFields(fields: any) {

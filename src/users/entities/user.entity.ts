@@ -18,7 +18,9 @@ export class User {
   @Prop()
   lastName: string;
 
-  @Prop()
+  @Prop({
+    unique: true,
+  })
   userName: string;
 
   @Prop({
@@ -38,7 +40,11 @@ export class User {
   })
   email: string;
 
-  @Prop()
+  @Prop({
+    minlength: 8,
+    match:
+      /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/,
+  })
   password: string;
 
   @Prop()
