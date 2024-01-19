@@ -16,7 +16,6 @@ import { UsersService } from '@/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
 import * as crypto from 'crypto';
-import { Request, Response } from 'express';
 import { MailerService } from '@/mailer/mailer.service';
 import { User } from '@/users/entities/user.entity';
 import { google } from 'googleapis';

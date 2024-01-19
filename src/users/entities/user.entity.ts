@@ -18,16 +18,23 @@ export class Social {
 export class User {
   _id: string;
 
-  @Prop()
+  @Prop({ lowercase: true })
   firstName: string;
 
-  @Prop()
+  @Prop({ lowercase: true })
   lastName: string;
 
   @Prop({
     unique: true,
+    lowercase: true,
   })
   userName: string;
+
+  @Prop({ lowercase: true })
+  country: string;
+
+  @Prop()
+  experience: number;
 
   @Prop({
     default:
@@ -77,6 +84,9 @@ export class User {
 
   @Prop({ default: null })
   socials: Social[];
+
+  @Prop({ default: [] })
+  skills: string[];
 
   async comparePassword(enteredPassword: string): Promise<boolean> {
     return bcrypt.compareSync(enteredPassword, this.password);

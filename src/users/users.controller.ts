@@ -31,11 +31,6 @@ export class UsersController {
     return await this.usersService.me(userId);
   }
 
-  @Get(':userId')
-  async findOne(@Param('userId') id: string) {
-    return await this.usersService.findOneId(id);
-  }
-
   @Get(':userName')
   async findName(@Param('userName') userName: string) {
     return await this.usersService.findByUserName(userName);

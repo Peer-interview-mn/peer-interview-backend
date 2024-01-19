@@ -90,13 +90,11 @@ export class UsersService {
   }
 
   async update(id: string, updateUserInput: UpdateUserInput) {
-    console.log('use', updateUserInput);
     try {
       const user = await this.userModel.findById(id);
       if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
       Object.assign(user, updateUserInput);
-      console.log('user: ', user);
       await user.save();
       return user;
     } catch (e) {
