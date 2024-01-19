@@ -35,9 +35,9 @@ export class MailerService {
         html: html,
       });
 
-      return !!send;
+      return send;
     } catch (e) {
-      return 'Failed to send email';
+      return e.message;
     } finally {
       transport.close();
     }

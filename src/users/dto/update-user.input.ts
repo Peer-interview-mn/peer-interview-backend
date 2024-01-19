@@ -1,10 +1,20 @@
-import { CreateUserInput } from './create-user.input';
+import { CreateUserInput, SocialInput, SocialType } from './create-user.input';
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 export class UpdateUserInput extends PartialType(CreateUserInput) {
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
   @IsString({ message: 'The description must be a string' })
-  id: string;
+  firstName: string;
+
+  @ApiProperty({})
+  @IsString({ message: 'The description must be a string' })
+  lastName: string;
+
+  @ApiProperty({ type: [SocialInput] })
+  socials?: SocialType[] | null;
+
+  @ApiProperty({})
+  @IsString({ message: 'The description must be a string' })
+  profileImg: string;
 }

@@ -1,7 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@/users/users.service';
 import { UpdateUserInput } from '@/users/dto/update-user.input';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('users')
 @Controller('users')
@@ -11,6 +21,14 @@ export class UsersController {
   @Get('')
   async findAll() {
     return await this.usersService.findAll();
+  }
+
+  @ApiBearerAuth()
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  async me(@Request() req) {
+    const userId = req.user._id;
+    return await this.usersService.me(userId);
   }
 
   @Get(':userId')
@@ -23,12 +41,12 @@ export class UsersController {
     return await this.usersService.findByUserName(userName);
   }
 
-  @Patch(':userId')
-  async updateUser(
-    @Param('userId') id: string,
-    @Body() updateUserInput: UpdateUserInput,
-  ) {
-    return await this.usersService.update(id, updateUserInput);
+  @ApiBearerAuth()
+  @Patch('updateProfile')
+  @UseGuards(AuthGuard('jwt'))
+  async updateUser(@Request() req, @Body() updateUserInput: UpdateUserInput) {
+    const userId = req.user._id;
+    return await this.usersService.update(userId, updateUserInput);
   }
 
   @Delete(':userId')

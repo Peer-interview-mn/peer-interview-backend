@@ -72,9 +72,24 @@ export class AuthService {
   }
 
   async register(createAuthInput: CreateAuthInput) {
-    const haveUser = await this.usersService.findOne(createAuthInput.email);
+    const { password, userName, email } = createAuthInput;
+    const passwordRegex =
+      /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
+    const isValid = passwordRegex.test(password);
+    if (!isValid)
+      throw new HttpException(
+        'The password must contain at least one uppercase letter, one special character, and one number.',
+        HttpStatus.BAD_REQUEST,
+      );
+
+    const haveUser = await this.usersService.findOne(email);
+    const haveUserName = await this.usersService.findByFields({
+      userName: userName,
+    });
     if (haveUser)
       throw new HttpException('already exists', HttpStatus.NOT_FOUND);
+    if (haveUserName)
+      throw new HttpException('username already exists', HttpStatus.NOT_FOUND);
 
     try {
       const newUser = await this.usersService.create(createAuthInput);
@@ -103,7 +118,7 @@ export class AuthService {
     const payload = {
       email: user.email,
       _id: user._id,
-      role: user.role,
+      role: user.systemRole,
     };
     const token = await this.jwtService.signAsync(payload);
     return token;
@@ -118,11 +133,11 @@ export class AuthService {
       if (!checkUser)
         throw new HttpException('invalid user', HttpStatus.NOT_FOUND);
 
-      if (!checkUser.verifyAccount)
-        throw new HttpException(
-          'This account has not been verified!',
-          HttpStatus.NOT_FOUND,
-        );
+      // if (!checkUser.verifyAccount)
+      //   throw new HttpException(
+      //     'This account has not been verified!',
+      //     HttpStatus.NOT_FOUND,
+      //   );
 
       if (!checkUser.password) {
         throw new UnauthorizedException('email or password wrong');

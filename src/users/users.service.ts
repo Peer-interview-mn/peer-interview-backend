@@ -47,6 +47,18 @@ export class UsersService {
     }
   }
 
+  async me(id: string) {
+    try {
+      const user = await this.userModel.findById(id);
+
+      if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+
+      return user;
+    } catch (e) {
+      return e.message;
+    }
+  }
+
   async findOne(email: string) {
     return await this.userModel.findOne({ email: email }).exec();
   }
@@ -79,19 +91,13 @@ export class UsersService {
   }
 
   async update(id: string, updateUserInput: UpdateUserInput) {
-    delete updateUserInput['id'];
+    console.log('use', updateUserInput);
     try {
-      const user = await this.userModel.findById(id).select('+password').exec();
+      const user = await this.userModel.findById(id);
       if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
-      if (updateUserInput.password && user.password) {
-        throw new HttpException(
-          'you cannot change your passport directly',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
       Object.assign(user, updateUserInput);
+      console.log('user: ', user);
       await user.save();
       return user;
     } catch (e) {

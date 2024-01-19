@@ -5,7 +5,13 @@ import * as crypto from 'crypto';
 @Schema({ timestamps: true })
 export class Social {
   @Prop()
-  user_name: string;
+  type: string;
+
+  @Prop({ default: null })
+  href?: string;
+
+  @Prop({ default: null })
+  file?: string | null;
 }
 
 @Schema({ timestamps: true })
@@ -29,6 +35,9 @@ export class User {
   })
   profileImg: string;
 
+  @Prop({ default: null })
+  systemRole: string;
+
   @Prop({ default: 'user' })
   role: string;
 
@@ -42,8 +51,6 @@ export class User {
 
   @Prop({
     minlength: 8,
-    match:
-      /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/,
   })
   password: string;
 
@@ -65,8 +72,11 @@ export class User {
   @Prop()
   resetPasswordExpire: Date;
 
-  @Prop()
-  socials: string[];
+  @Prop({ default: null })
+  website: string;
+
+  @Prop({ default: null })
+  socials: Social[];
 
   async comparePassword(enteredPassword: string): Promise<boolean> {
     return bcrypt.compareSync(enteredPassword, this.password);
@@ -90,9 +100,12 @@ UserSchema.index({ email: 1 });
 UserSchema.index({ userName: 1 });
 
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) next();
+  if (!this.isModified('password')) {
+    next();
+  }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 UserSchema.loadClass(User);
