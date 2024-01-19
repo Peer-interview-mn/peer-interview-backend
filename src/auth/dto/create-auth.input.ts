@@ -88,12 +88,29 @@ export class ChangePasswordInput {
   @ApiProperty({})
   @IsNotEmpty({ message: 'The description is required' })
   @IsString({ message: 'The description must be a string' })
-  resetToken: string;
+  resetPasswordOtp: string;
 
   @ApiProperty({})
   @IsNotEmpty({ message: 'The description is required' })
   @IsString({ message: 'The description must be a string' })
   newPassword: string;
+
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
+  userId: string;
+}
+
+export class CheckPassOtpInput {
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
+  resetPasswordOtp: string;
+
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
+  mail: string;
 }
 
 export class ResetTokenInput {

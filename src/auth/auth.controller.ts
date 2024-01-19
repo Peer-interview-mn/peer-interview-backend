@@ -3,6 +3,7 @@ import { AuthService } from '@/auth/auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import {
   ChangePasswordInput,
+  CheckPassOtpInput,
   CreateAuthInput,
   EmailInput,
   LoginInput,
@@ -47,6 +48,11 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() changePassInput: ChangePasswordInput) {
     return await this.authService.resetPassword(changePassInput);
+  }
+
+  @Post('check-changePass-opt')
+  async checkOpt(@Body() changePassInput: CheckPassOtpInput) {
+    return await this.authService.checkResetOtp(changePassInput);
   }
 
   @Post('login-with-refresh-token')

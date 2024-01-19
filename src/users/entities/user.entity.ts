@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
+import { generateVerifyCode } from '@/common/verifyCode';
 
 @Schema({ timestamps: true })
 export class Social {
@@ -93,15 +93,19 @@ export class User {
   }
 
   async generatePasswordChangeToken(): Promise<string> {
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const code = generateVerifyCode();
 
-    this.resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(resetToken)
-      .digest('hex');
+    // const resetToken = crypto.randomBytes(20).toString('hex');
+    //
+    // this.resetPasswordToken = crypto
+    //   .createHash('sha256')
+    //   .update(resetToken)
+    //   .digest('hex');
 
+    this.resetPasswordToken = code.code;
     this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
-    return resetToken;
+    return code.code;
+    // return resetToken;
   }
 }
 export const UserSchema = SchemaFactory.createForClass(User);

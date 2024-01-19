@@ -64,6 +64,15 @@ export class UsersService {
 
   async findByUserName(userName: string) {
     const user = await this.userModel.findOne({ userName: userName }).exec();
+    // const user = await this.userModel
+    //   .aggregate([
+    //     {
+    //       $match: {
+    //         userName: userName,
+    //       },
+    //     },
+    //   ])
+    //   .exec();
 
     if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
     return user;
@@ -83,9 +92,10 @@ export class UsersService {
 
   async findOneCheck(email: string) {
     const user = await this.userModel
-      .findOne({ email: email })
+      .findOne({ email })
       .select('+password')
       .exec();
+
     return user;
   }
 

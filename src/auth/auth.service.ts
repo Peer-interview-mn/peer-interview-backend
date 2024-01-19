@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   ChangePasswordInput,
+  CheckPassOtpInput,
   CreateAuthInput,
   EmailInput,
   GoogleUserInput,
@@ -15,7 +16,7 @@ import {
 import { UsersService } from '@/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
-import * as crypto from 'crypto';
+// import * as crypto from 'crypto';
 import { MailerService } from '@/mailer/mailer.service';
 import { User } from '@/users/entities/user.entity';
 import { google } from 'googleapis';
@@ -152,11 +153,11 @@ export class AuthService {
       if (!checkUser)
         throw new HttpException('invalid user', HttpStatus.NOT_FOUND);
 
-      // if (!checkUser.verifyAccount)
-      //   throw new HttpException(
-      //     'This account has not been verified!',
-      //     HttpStatus.NOT_FOUND,
-      //   );
+      if (!checkUser.verifyAccount)
+        throw new HttpException(
+          'This account has not been verified!',
+          HttpStatus.NOT_FOUND,
+        );
 
       if (!checkUser.password) {
         throw new UnauthorizedException('email or password wrong');
@@ -267,8 +268,7 @@ export class AuthService {
       const resetToken = await user.generatePasswordChangeToken();
       await user.save();
 
-      const link = `https://www.peerinterview.io/changepassword/?token=${resetToken}`;
-      const message = `sain bnu.<br><br>doorh linked darj nuuts ugee solino uu!:<br> <a  href=${link}>${link}</a>`;
+      const message = `sain bnu.<br><br>tanii nuuts ug sergeeh code bol!:<br> ${resetToken}`;
       const sendMail = await this.mailerService.sendMail({
         toMail: email,
         subject: 'Solih',
@@ -288,17 +288,38 @@ export class AuthService {
     }
   }
 
+  async checkResetOtp(input: CheckPassOtpInput) {
+    const user = await this.usersService.findByFields({
+      email: input.mail,
+      resetPasswordToken: input.resetPasswordOtp,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) throw new HttpException(`wrong code`, HttpStatus.NOT_FOUND);
+    return user;
+  }
+
   async resetPassword(changePasswordInput: ChangePasswordInput) {
     try {
-      const { newPassword, resetToken } = changePasswordInput;
+      const { newPassword, resetPasswordOtp, userId } = changePasswordInput;
 
-      const encrypted = crypto
-        .createHash('sha256')
-        .update(resetToken)
-        .digest('hex');
+      const passwordRegex =
+        /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
+      const isValid = passwordRegex.test(newPassword);
+
+      if (!isValid)
+        throw new HttpException(
+          'The password must contain at least one uppercase letter, one special character, and one number.',
+          HttpStatus.BAD_REQUEST,
+        );
+      // const encrypted = crypto
+      //   .createHash('sha256')
+      //   .update(resetPasswordOtp)
+      //   .digest('hex');
 
       const user = await this.usersService.findByFields({
-        resetPasswordToken: encrypted,
+        _id: userId,
+        resetPasswordToken: resetPasswordOtp,
         resetPasswordExpire: { $gt: Date.now() },
       });
       if (!user) throw new HttpException(`wrong code`, HttpStatus.NOT_FOUND);
