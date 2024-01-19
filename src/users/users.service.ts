@@ -51,6 +51,10 @@ export class UsersService {
     return await this.userModel.findOne({ email: email }).exec();
   }
 
+  async findByUserName(userName: string) {
+    return await this.userModel.findOne({ userName: userName }).exec();
+  }
+
   async findByFields(fields: any) {
     return await this.userModel.findOne(fields).exec();
   }
@@ -92,7 +96,9 @@ export class UsersService {
     }
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    const user = await this.userModel.findByIdAndDelete(id).exec();
+    if (!user) throw new HttpException('not found user', HttpStatus.NOT_FOUND);
+    return user;
   }
 }

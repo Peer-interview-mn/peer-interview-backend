@@ -18,6 +18,9 @@ export class User {
   @Prop()
   lastName: string;
 
+  @Prop()
+  userName: string;
+
   @Prop({
     default:
       'https://placehold.co/150X150/EEE/31343C?font=playfair-display&text=U',
@@ -78,6 +81,8 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.index({ email: 1 });
+UserSchema.index({ userName: 1 });
+
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) next();
   const salt = await bcrypt.genSalt(10);

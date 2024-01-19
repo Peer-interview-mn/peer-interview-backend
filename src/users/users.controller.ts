@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@/users/users.service';
 import { UpdateUserInput } from '@/users/dto/update-user.input';
@@ -18,11 +18,21 @@ export class UsersController {
     return await this.usersService.findOneId(id);
   }
 
+  @Get(':userName')
+  async findName(@Param('userName') userName: string) {
+    return await this.usersService.findByUserName(userName);
+  }
+
   @Patch(':userId')
   async updateUser(
     @Param('userId') id: string,
     @Body() updateUserInput: UpdateUserInput,
   ) {
     return await this.usersService.update(id, updateUserInput);
+  }
+
+  @Delete(':userId')
+  async deleteUser(@Param('userId') id: string) {
+    return await this.usersService.remove(id);
   }
 }

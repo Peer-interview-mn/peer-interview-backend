@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import {
@@ -22,15 +12,10 @@ import {
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  async googleAuth() {}
 
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req, @Res() res) {
-    return await this.authService.googleLogin(req, res);
+  @Get('google/:token')
+  async googleTokenAuth(@Param('token') token: string) {
+    return await this.authService.googleTokenAuth(token);
   }
 
   @Post('sign-up')
