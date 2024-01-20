@@ -45,6 +45,10 @@ export class AuthService {
         const myUser = await this.usersService.findOne(data.email);
 
         if (myUser) {
+          if (!myUser.verifyAccount) {
+            myUser.verifyAccount = true;
+            await myUser.save();
+          }
           const accessToken = await this.generateJwtToken(myUser);
           const refreshToken = await this.generateRefToken(myUser);
           return { access_token: accessToken, refresh_token: refreshToken };
