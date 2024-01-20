@@ -27,16 +27,9 @@ export class CreateAuthInput {
   @IsString({ message: 'The description must be a string' })
   password: string;
 
-  // @ApiProperty({})
-  // @IsString({ message: 'The description must be a string' })
-  // phone: string;
-
   @ApiProperty({})
   @IsString({ message: 'The description must be a string' })
   profileImg: string;
-
-  // @Field(() => [String], { nullable: true })
-  // socials: string[];
 }
 
 export class LoginInput {

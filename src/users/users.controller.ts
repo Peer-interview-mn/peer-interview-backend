@@ -33,6 +33,7 @@ export class UsersController {
 
   @Get(':userName')
   async findName(@Param('userName') userName: string) {
+    console.log('user: ', userName);
     return await this.usersService.findByUserName(userName);
   }
 

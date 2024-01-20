@@ -24,4 +24,8 @@ import { MailerModule } from './mailer/mailer.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+  // configure(consumer: MiddlewareConsumer) {
+  //   consumer.apply(LowercaseFieldsMiddleware).forRoutes('*');
+  // }
+}
