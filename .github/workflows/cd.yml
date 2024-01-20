@@ -20,6 +20,8 @@ jobs:
           MONGO_URI: ${{secrets.MONGO_URI}}
           JWT_SECRET: ${{secrets.JWT_SECRET}}
           JWT_EXPRIRESIN: ${{secrets.JWT_EXPRIRESIN}}
+          REF_SECRET: ${{secrets.REF_SECRET}}
+          REF_EXPRIRESIN: ${{secrets.REF_EXPRIRESIN}}
           SMTP_HOST: ${{secrets.SMTP_HOST}}
           SMTP_PORT: ${{secrets.SMTP_PORT}}
           SMTP_USER: ${{secrets.SMTP_USER}}
@@ -34,6 +36,8 @@ jobs:
           -e MONGO_URI=$MONGO_URI
           -e JWT_SECRET=$JWT_SECRET
           -e JWT_EXPRIRESIN=$JWT_EXPRIRESIN
+          -e REF_SECRET=$REF_SECRET
+          -e REF_EXPRIRESIN=$REF_EXPRIRESIN
           -e SMTP_HOST=$SMTP_HOST
           -e SMTP_PORT=$SMTP_PORT
           -e SMTP_USER=$SMTP_USER

@@ -272,7 +272,7 @@ export class AuthService {
           HttpStatus.NOT_FOUND,
         );
 
-      // const resetToken = await user.generatePasswordChangeToken();
+      const resetToken = await user.generatePasswordChangeToken();
       await user.save();
 
       // const message = `sain bnu.<br><br>tanii nuuts ug sergeeh code bol!:<br> ${resetToken}`;
@@ -283,7 +283,7 @@ export class AuthService {
       //   html: message,
       // });
 
-      if (user)
+      if (user && resetToken)
         return {
           success: true,
         };
