@@ -62,6 +62,11 @@ export class GoogleUserInput {
   lastName: string;
 
   @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
+  userName: string;
+
+  @ApiProperty({})
   @IsString({ message: 'The description must be a string' })
   profileImg: string;
 }

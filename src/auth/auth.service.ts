@@ -46,12 +46,14 @@ export class AuthService {
 
         if (myUser) {
           const accessToken = await this.generateJwtToken(myUser);
-          return { access_token: accessToken };
+          const refreshToken = await this.generateRefToken(myUser);
+          return { access_token: accessToken, refresh_token: refreshToken };
         }
 
         const createUser: GoogleUserInput = {
           email: data.email,
           verifyAccount: true,
+          userName: data.email,
           firstName: data.given_name,
           lastName: data.family_name,
           profileImg: data.picture,
