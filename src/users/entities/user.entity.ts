@@ -42,11 +42,17 @@ export class User {
   })
   profileImg: string;
 
-  @Prop({ default: null })
+  @Prop({ default: 'user' })
   systemRole: string;
 
-  @Prop({ default: 'user' })
+  @Prop({ default: null })
   role: string;
+
+  @Prop()
+  interview_skill: string;
+
+  @Prop()
+  description: string;
 
   @Prop({
     unique: true,

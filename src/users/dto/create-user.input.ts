@@ -9,42 +9,42 @@ export interface SocialType {
 
 export class SocialInput {
   @ApiProperty({})
-  @IsString({ message: 'The description must be a string' })
+  @IsString({ message: 'The type must be a string' })
   type: string;
 
   @ApiProperty({})
-  @IsString({ message: 'The description must be a string' })
+  @IsString({ message: 'The href must be a string' })
   href: string;
 
   @ApiProperty({})
-  @IsString({ message: 'The description must be a string' })
+  @IsString({ message: 'The file must be a string' })
   file: string;
 }
 
 export class CreateUserInput {
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The firstName is required' })
+  @IsString({ message: 'The firstName must be a string' })
   firstName: string;
 
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The lastName is required' })
+  @IsString({ message: 'The lastName must be a string' })
   lastName: string;
 
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The userName is required' })
+  @IsString({ message: 'The userName must be a string' })
   userName: string;
 
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The email is required' })
+  @IsString({ message: 'The email must be a string' })
   email: string;
 
   @ApiProperty({})
   // @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsString({ message: 'The password must be a string' })
   password: string;
 
   // @ApiProperty({})
@@ -56,30 +56,30 @@ export class CreateUserInput {
   socials?: SocialType[] | null;
 
   @ApiProperty({})
-  @IsString({ message: 'The description must be a string' })
+  @IsString({ message: 'The profileImg must be a string' })
   profileImg: string;
 }
 
 export class GoogleUserInput {
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The email is required' })
+  @IsString({ message: 'The email must be a string' })
   email: string;
 
   verifyAccount: boolean;
 
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The firstName is required' })
+  @IsString({ message: 'The firstName must be a string' })
   firstName: string;
 
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The lastName is required' })
+  @IsString({ message: 'The lastName must be a string' })
   lastName: string;
 
   @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
+  @IsNotEmpty({ message: 'The profileImg is required' })
+  @IsString({ message: 'The profileImg must be a string' })
   profileImg: string;
 }
