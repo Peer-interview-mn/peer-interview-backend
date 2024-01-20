@@ -9,11 +9,14 @@ import {
   LoginInput,
   ResetTokenInput,
 } from '@/auth/dto/create-auth.input';
+// import { MailerService } from '@/mailer/mailer.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService, // private readonly mailerService: MailerService,
+  ) {}
 
   @Get('google/:token')
   async googleTokenAuth(@Param('token') token: string) {

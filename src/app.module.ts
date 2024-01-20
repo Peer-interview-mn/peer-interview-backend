@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { MailerModule } from './mailer/mailer.module';
+import { FileUploadModule } from './file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MailerModule } from './mailer/mailer.module';
     UsersModule,
     AuthModule,
     MailerModule,
+    FileUploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

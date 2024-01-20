@@ -30,6 +30,10 @@ jobs:
           GOOGLE_SECRET: ${{secrets.GOOGLE_SECRET}}
           GOOGLE_CALLBACK_URL: ${{secrets.GOOGLE_CALLBACK_URL}}
           HOSTMAIL: ${{secrets.HOSTMAIL}}
+          AWS_ACCESS: ${{secrets.AWS_ACCESS}}
+          AWS_SECRET: ${{secrets.AWS_SECRET}}
+          AWS_REGION: ${{secrets.AWS_REGION}}
+          AWS_S3_BUCKET: ${{secrets.AWS_S3_BUCKET}}
         run: >
           sudo docker run -d
           -e PORT=$PORT
@@ -38,6 +42,10 @@ jobs:
           -e JWT_EXPRIRESIN=$JWT_EXPRIRESIN
           -e REF_SECRET=$REF_SECRET
           -e REF_EXPRIRESIN=$REF_EXPRIRESIN
+          -e AWS_ACCESS=$AWS_ACCESS
+          -e AWS_SECRET=$AWS_SECRET
+          -e AWS_REGION=$AWS_REGION
+          -e AWS_S3_BUCKET=$AWS_S3_BUCKET
           -e SMTP_HOST=$SMTP_HOST
           -e SMTP_PORT=$SMTP_PORT
           -e SMTP_USER=$SMTP_USER
