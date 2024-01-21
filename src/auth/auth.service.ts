@@ -94,8 +94,8 @@ export class AuthService {
     if (haveUserName) {
       if (
         !haveUserName.verifyAccount &&
-        haveUserName.lastName === lastName &&
-        haveUserName.firstName === firstName
+        haveUserName.lastName === lastName.toLowerCase() &&
+        haveUserName.firstName === firstName.toLowerCase()
       ) {
         haveUserName.email = email;
         await haveUserName.save();
