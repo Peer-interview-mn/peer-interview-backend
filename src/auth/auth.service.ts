@@ -78,7 +78,7 @@ export class AuthService {
   }
 
   async register(createAuthInput: CreateAuthInput) {
-    const { password, userName, email } = createAuthInput;
+    const { password, userName, email, lastName, firstName } = createAuthInput;
 
     const haveUser = await this.usersService.findOne(email);
     const haveUserName = await this.usersService.findByFields({
@@ -90,11 +90,22 @@ export class AuthService {
         `this ${email} mail already exists`,
         HttpStatus.BAD_REQUEST,
       );
-    if (haveUserName)
+
+    if (haveUserName) {
+      if (
+        !haveUserName.verifyAccount &&
+        haveUserName.lastName === lastName &&
+        haveUserName.firstName === firstName
+      ) {
+        haveUserName.email = email;
+        await haveUserName.save();
+        return haveUserName;
+      }
       throw new HttpException(
         `this ${userName} username already exists`,
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const passwordRegex =
       /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
