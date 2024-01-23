@@ -7,6 +7,10 @@ export interface SocialType {
   file: string;
 }
 
+export interface SkillType {
+  name: string;
+}
+
 export class SocialInput {
   @ApiProperty({})
   @IsString({ message: 'The type must be a string' })
@@ -19,6 +23,12 @@ export class SocialInput {
   @ApiProperty({})
   @IsString({ message: 'The file must be a string' })
   file: string;
+}
+
+export class SkillInput {
+  @ApiProperty({})
+  @IsString({ message: 'The name must be a string' })
+  name: string;
 }
 
 export class CreateUserInput {

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { generateVerifyCode } from '@/common/verifyCode';
+import { BaseData } from '@/shared';
 
 @Schema({ timestamps: true })
 export class Social {
@@ -15,9 +16,13 @@ export class Social {
 }
 
 @Schema({ timestamps: true })
-export class User {
-  _id: string;
+export class Skill {
+  @Prop({ lowercase: true })
+  name: string;
+}
 
+@Schema({ timestamps: true })
+export class User extends BaseData {
   @Prop({ lowercase: true })
   firstName: string;
 

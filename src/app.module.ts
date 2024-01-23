@@ -8,6 +8,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { MailerModule } from './mailer/mailer.module';
 import { FileUploadModule } from './file-upload/file-upload.module';
+import { InterviewBookingModule } from './interview-booking/interview-booking.module';
+import { MatchModule } from './match/match.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     AuthModule,
     MailerModule,
     FileUploadModule,
+    InterviewBookingModule,
+    MatchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

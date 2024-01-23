@@ -68,7 +68,10 @@ export class UsersService {
   }
 
   async findByUserName(userName: string) {
-    const user = await this.userModel.findOne({ userName: userName }).exec();
+    // const user = await this.userModel.findOne({ userName: userName }).exec();
+    const user = await this.userModel
+      .find({ skills: { $in: ['golang'] } })
+      .exec();
 
     if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
     return user;
