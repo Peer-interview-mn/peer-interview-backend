@@ -26,6 +26,10 @@ export class UpdateUserInput {
   country: string;
 
   @ApiProperty({})
+  @IsString({ message: 'The location must be a string' })
+  location: string;
+
+  @ApiProperty({})
   @IsString({ message: 'The description must be a string' })
   description: string;
 

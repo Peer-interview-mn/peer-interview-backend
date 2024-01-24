@@ -76,6 +76,9 @@ export class User extends BaseData {
   @Prop()
   phone: string;
 
+  @Prop({ lowercase: true })
+  location: string;
+
   @Prop({ default: false })
   verifyAccount: boolean;
 
@@ -117,7 +120,6 @@ export class User extends BaseData {
     this.resetPasswordToken = code.code;
     this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
     return code.code;
-    // return resetToken;
   }
 }
 export const UserSchema = SchemaFactory.createForClass(User);

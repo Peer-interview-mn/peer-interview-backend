@@ -40,22 +40,45 @@ export class InterviewBookingController {
   async findAll() {
     return await this.interviewBookingService.findAll();
   }
+  @ApiBearerAuth()
+  @Get('list/me')
+  @UseGuards(AuthGuard('jwt'))
+  async findMe(@Request() req) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.findMe(userId);
+  }
+
+  // @ApiBearerAuth()
+  @Get('suggest/me/:time')
+  // @UseGuards(AuthGuard('jwt'))
+  async suggestMe(@Request() req, @Param('time') time: string) {
+    // const userId = req.user._id;
+    return await this.interviewBookingService.suggestMe(time);
+  }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.interviewBookingService.findOne(id);
   }
 
+  @ApiBearerAuth()
   @Patch(':id')
-  update(
+  @UseGuards(AuthGuard('jwt'))
+  async update(
+    @Request() req,
     @Param('id') id: string,
     @Body() updateInterviewBookingDto: UpdateInterviewBookingDto,
   ) {
-    return this.interviewBookingService.update(+id, updateInterviewBookingDto);
+    const userId = req.user._id;
+    return await this.interviewBookingService.update(
+      userId,
+      id,
+      updateInterviewBookingDto,
+    );
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.interviewBookingService.remove(+id);
+    return this.interviewBookingService.remove(id);
   }
 }
