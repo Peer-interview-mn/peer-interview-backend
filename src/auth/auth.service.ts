@@ -17,7 +17,7 @@ import { UsersService } from '@/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
 // import * as crypto from 'crypto';
-// import { MailerService } from '@/mailer/mailer.service';
+import { MailerService } from '@/mailer/mailer.service';
 import { User } from '@/users/entities/user.entity';
 import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
@@ -27,7 +27,8 @@ export class AuthService {
   constructor(
     private configService: ConfigService,
     private usersService: UsersService,
-    private jwtService: JwtService, // private mailerService: MailerService,
+    private jwtService: JwtService,
+    private mailerService: MailerService,
   ) {}
 
   async googleTokenAuth(token: string) {
@@ -223,17 +224,17 @@ export class AuthService {
       user.avc_expire = code.expireDate;
       await user.save();
 
-      // const sendMail = await this.mailerService.sendMail({
-      //   toMail: email,
-      //   subject: 'Mail verify code',
-      //   text: 'welcome my friend',
-      //   html: `
-      //   <div style="display: flex; align-items: center; justify-content: center; flex-direction: column">
-      //     <h1>Welcome Peer Interview </h1>
-      //     <br><p>your account verify code: ${code.code}</p></br>
-      //   </div>`,
-      // });
-      if (user)
+      const sendMail = await this.mailerService.sendMail({
+        toMail: email,
+        subject: 'Mail verify code',
+        text: 'welcome my friend',
+        html: `
+        <div style="text-align: center">
+          <h1>Welcome Peer Interview </h1>
+          <br/><p>your account verify code: ${code.code}</p>
+        </div>`,
+      });
+      if (sendMail)
         return {
           success: true,
         };
@@ -292,15 +293,15 @@ export class AuthService {
       const resetToken = await user.generatePasswordChangeToken();
       await user.save();
 
-      // const message = `sain bnu.<br><br>tanii nuuts ug sergeeh code bol!:<br> ${resetToken}`;
-      // const sendMail = await this.mailerService.sendMail({
-      //   toMail: email,
-      //   subject: 'Solih',
-      //   text: 'solih',
-      //   html: message,
-      // });
+      const message = `hello.<br>your password reset code is: ${resetToken}`;
+      const sendMail = await this.mailerService.sendMail({
+        toMail: email,
+        subject: 'forgot password',
+        text: 'Password change token',
+        html: message,
+      });
 
-      if (user && resetToken)
+      if (user && sendMail)
         return {
           success: true,
         };

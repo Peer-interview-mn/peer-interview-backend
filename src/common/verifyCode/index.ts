@@ -9,7 +9,7 @@ export const generateVerifyCode = () => {
     AVC += digits[Math.floor(Math.random() * 10)];
   }
 
-  return { code: '000000', expireDate };
+  return { code: AVC, expireDate };
 };
 
 export const verifyCodeCheck = (user: User, clientCode: string): boolean => {
