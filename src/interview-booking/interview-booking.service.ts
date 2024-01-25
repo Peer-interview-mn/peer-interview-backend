@@ -78,30 +78,59 @@ export class InterviewBookingService {
   }
 
   async suggestMe(time: string) {
-    const baseMoment = moment.tz(time, 'UTC'); // Replace 'YourTimeZone' with the desired time zone
+    const baseMoment = moment.tz(time, 'UTC');
+    const desiredHour = baseMoment.get('hour');
 
-    const availabilityArray: boolean[] = [];
+    console.log('des: ', desiredHour);
+    // Optimize database calls with a single aggregation query
+    const availableDates = await this.interviewBookingModel.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: baseMoment.clone().startOf('day').toDate(),
+            $lt: baseMoment.clone().add(14, 'days').startOf('day').toDate(),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$date',
+            },
+          },
+          dayData: { $push: '$$ROOT' }, // Or specify desired fields
+        },
+      },
+      // {
+      //   $project: {
+      //     _id: 0,
+      //     date: 1,
+      //   },
+      // },
+      // {
+      //   $group: {
+      //     _id: null,
+      //     availableDates: {
+      //       $push: {
+      //         $dateToString: {
+      //           format: '%Y-%m-%d',
+      //           date: '$date',
+      //         },
+      //       },
+      //     },
+      //   },
+      // },
+    ]);
 
-    for (let i = 0; i < 14; i++) {
-      const currentDate = baseMoment.clone().add(i, 'days');
+    // const availabilityArray =
+    //   availableDates.length > 0
+    //     ? availableDates[0].availableDates.map((date) => !date)
+    //     : []; // Consider potential empty result
 
-      const currentDateTime = currentDate
-        .clone()
-        .set({ hour: 14, minute: 0, second: 0 });
-
-      console.log(' date: ', currentDateTime);
-      console.log('find date: ', currentDateTime.toDate());
-
-      const isAvailable = await this.interviewBookingModel.exists({
-        date: currentDateTime.toDate(),
-      });
-
-      console.log('is: ', isAvailable);
-
-      availabilityArray.push(!!isAvailable);
-    }
-
-    return availabilityArray;
+    // return availabilityArray;
+    return availableDates;
   }
 
   async update(
