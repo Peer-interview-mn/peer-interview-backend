@@ -34,7 +34,15 @@ export class UsersService {
     const users = await this.userModel
       .find(
         {},
-        { resetPasswordToken: 0, account_verify_code: 0, systemRole: 0 },
+        {
+          resetPasswordToken: 0,
+          account_verify_code: 0,
+          // systemRole: 0,
+          password: 0,
+          verifyAccount: 0,
+          resetPasswordExpire: 0,
+          avc_expire: 0,
+        },
       )
       .exec();
     return users;
@@ -53,7 +61,15 @@ export class UsersService {
 
   async me(id: string) {
     try {
-      const user = await this.userModel.findById(id);
+      const user = await this.userModel.findById(id, {
+        resetPasswordToken: 0,
+        account_verify_code: 0,
+        // systemRole: 0,
+        password: 0,
+        verifyAccount: 0,
+        resetPasswordExpire: 0,
+        avc_expire: 0,
+      });
 
       if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
@@ -68,10 +84,10 @@ export class UsersService {
   }
 
   async findByUserName(userName: string) {
-    // const user = await this.userModel.findOne({ userName: userName }).exec();
-    const user = await this.userModel
-      .find({ skills: { $in: ['golang'] } })
-      .exec();
+    const user = await this.userModel.findOne({ userName: userName }).exec();
+    // const user = await this.userModel
+    //   .find({ skills: { $in: ['golang'] } })
+    //   .exec();
 
     if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
     return user;

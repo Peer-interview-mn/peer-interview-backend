@@ -50,7 +50,13 @@ export class InterviewBookingService {
   }
 
   async findAll() {
-    const allBooking = await this.interviewBookingModel.find({});
+    const allBooking = await this.interviewBookingModel
+      .find({})
+      .populate({
+        path: 'userId',
+        select: 'userName firstName lastName email skills',
+      })
+      .exec();
     return allBooking;
   }
 
@@ -61,7 +67,13 @@ export class InterviewBookingService {
   }
 
   async findMe(id: string) {
-    const booking = await this.interviewBookingModel.find({ userId: id });
+    const booking = await this.interviewBookingModel
+      .find({ userId: id })
+      .populate({
+        path: 'userId',
+        select: 'userName firstName lastName email skills',
+      })
+      .exec();
     return booking;
   }
 

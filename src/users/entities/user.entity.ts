@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { generateVerifyCode } from '@/common/verifyCode';
 import { BaseData } from '@/shared';
+import { UserSystemRoleType } from '@/users/enums/index.enum';
 
 @Schema({ timestamps: true })
 export class Social {
@@ -47,7 +48,11 @@ export class User extends BaseData {
   })
   profileImg: string;
 
-  @Prop({ default: 'user' })
+  @Prop({
+    type: 'string',
+    enum: UserSystemRoleType,
+    default: UserSystemRoleType.USER,
+  })
   systemRole: string;
 
   @Prop({ default: null })
