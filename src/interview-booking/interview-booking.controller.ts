@@ -77,8 +77,11 @@ export class InterviewBookingController {
     );
   }
 
+  @ApiBearerAuth()
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.interviewBookingService.remove(id);
+  @UseGuards(AuthGuard('jwt'))
+  async remove(@Request() req, @Param('id') id: string) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.remove(userId, id);
   }
 }

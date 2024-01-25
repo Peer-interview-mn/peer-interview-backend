@@ -19,9 +19,31 @@ export class InterviewBookingService {
     createInterviewBookingDto: CreateInterviewBookingDto,
   ) {
     const { date } = createInterviewBookingDto;
+    const baseMoment = moment.tz(date, 'UTC');
+    const desiredHour = baseMoment.get('hour');
+    const twoHoursBefore = baseMoment.subtract(2, 'hours');
+
+    const beforeHave = await this.interviewBookingModel.find({
+      userId: userId,
+      date: {
+        $gte: twoHoursBefore,
+        $lte: date,
+      },
+      process: {
+        $in: [
+          InterviewBookingProcessType.PENDING,
+          InterviewBookingProcessType.MATCHED,
+        ],
+      },
+    });
+
+    if (beforeHave.length)
+      throw new HttpException(
+        'You may have already filled this time or you may be interviewing',
+        HttpStatus.BAD_REQUEST,
+      );
 
     const currentDate = moment().tz('UTC');
-
     const minAllowedDate = currentDate.clone().add(2, 'hours');
 
     const maxAllowedDate = currentDate.clone().add(14, 'days');
@@ -44,6 +66,7 @@ export class InterviewBookingService {
 
     const booking = new this.interviewBookingModel({
       userId,
+      time: desiredHour,
       ...createInterviewBookingDto,
     });
     return await booking.save();
@@ -79,10 +102,8 @@ export class InterviewBookingService {
 
   async suggestMe(time: string) {
     const baseMoment = moment.tz(time, 'UTC');
-    const desiredHour = baseMoment.get('hour');
+    // const desiredHour = baseMoment.get('hour');
 
-    console.log('des: ', desiredHour);
-    // Optimize database calls with a single aggregation query
     const availableDates = await this.interviewBookingModel.aggregate([
       {
         $match: {
@@ -158,7 +179,12 @@ export class InterviewBookingService {
     return booking;
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} interviewBooking`;
+  async remove(userId, id: string) {
+    const delBooking = await this.interviewBookingModel.findOneAndDelete({
+      _id: id,
+      userId: userId,
+    });
+    if (!delBooking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+    return delBooking;
   }
 }

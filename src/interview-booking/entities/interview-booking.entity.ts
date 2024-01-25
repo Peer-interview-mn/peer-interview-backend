@@ -25,6 +25,9 @@ export class InterviewBooking extends BaseData {
 
   @Prop({ type: Date })
   date: Date;
+
+  @Prop({ type: String })
+  time: string;
 }
 
 export const InterviewBookingSchema =
