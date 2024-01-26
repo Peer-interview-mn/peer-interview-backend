@@ -33,12 +33,15 @@ export class CreateAuthInput {
 }
 
 export class LoginInput {
-  @ApiProperty({})
+  @ApiProperty({
+    description: 'User email',
+    default: 'string@gmail.com',
+  })
   @IsNotEmpty({ message: 'The description is required' })
   @IsString({ message: 'The description must be a string' })
   email: string;
 
-  @ApiProperty({})
+  @ApiProperty({ description: 'User password', default: 'String1234@' })
   @IsNotEmpty({ message: 'The description is required' })
   @IsString({ message: 'The description must be a string' })
   password: string;

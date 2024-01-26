@@ -48,12 +48,12 @@ export class InterviewBookingController {
     return await this.interviewBookingService.findMe(userId);
   }
 
-  // @ApiBearerAuth()
+  @ApiBearerAuth()
   @Get('suggest/me/:time')
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   async suggestMe(@Request() req, @Param('time') time: string) {
-    // const userId = req.user._id;
-    return await this.interviewBookingService.suggestMe(time);
+    const userId = req.user._id;
+    return await this.interviewBookingService.suggestMe(userId, time);
   }
 
   @Get(':id')

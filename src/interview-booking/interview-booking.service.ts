@@ -3,9 +3,11 @@ import { CreateInterviewBookingDto } from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { InterviewBooking } from '@/interview-booking/entities/interview-booking.entity';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as moment from 'moment-timezone';
 import { InterviewBookingProcessType } from '@/interview-booking/enums/index.enum';
+
+const { ObjectId } = Types;
 
 @Injectable()
 export class InterviewBookingService {
@@ -100,7 +102,7 @@ export class InterviewBookingService {
     return booking;
   }
 
-  async suggestMe(time: string) {
+  async suggestMe(userId: string, time: string) {
     const baseMoment = moment.tz(time, 'UTC');
     // const desiredHour = baseMoment.get('hour');
 
@@ -111,6 +113,7 @@ export class InterviewBookingService {
             $gte: baseMoment.clone().startOf('day').toDate(),
             $lt: baseMoment.clone().add(14, 'days').startOf('day').toDate(),
           },
+          userId: { $ne: new ObjectId(userId) },
         },
       },
       {
@@ -121,36 +124,11 @@ export class InterviewBookingService {
               date: '$date',
             },
           },
-          dayData: { $push: '$$ROOT' }, // Or specify desired fields
+          dayData: { $push: '$$ROOT' },
         },
       },
-      // {
-      //   $project: {
-      //     _id: 0,
-      //     date: 1,
-      //   },
-      // },
-      // {
-      //   $group: {
-      //     _id: null,
-      //     availableDates: {
-      //       $push: {
-      //         $dateToString: {
-      //           format: '%Y-%m-%d',
-      //           date: '$date',
-      //         },
-      //       },
-      //     },
-      //   },
-      // },
     ]);
 
-    // const availabilityArray =
-    //   availableDates.length > 0
-    //     ? availableDates[0].availableDates.map((date) => !date)
-    //     : []; // Consider potential empty result
-
-    // return availabilityArray;
     return availableDates;
   }
 
