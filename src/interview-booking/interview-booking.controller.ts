@@ -49,11 +49,31 @@ export class InterviewBookingController {
   }
 
   @ApiBearerAuth()
-  @Get('suggest/me/:time')
+  @Get('suggest-day/me/:id/:time')
   @UseGuards(AuthGuard('jwt'))
-  async suggestMe(@Request() req, @Param('time') time: string) {
+  async suggestMe(
+    @Request() req,
+    @Param('time') time: string,
+    @Param('id') id: string,
+  ) {
     const userId = req.user._id;
-    return await this.interviewBookingService.suggestMe(userId, time);
+    return await this.interviewBookingService.suggestMe(id, userId, time);
+  }
+
+  @ApiBearerAuth()
+  @Get('suggest-hour/me/:id/:time')
+  @UseGuards(AuthGuard('jwt'))
+  async suggestMeDay(
+    @Request() req,
+    @Param('time') time: string,
+    @Param('id') id: string,
+  ) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.getSuggestTimeByDay(
+      id,
+      userId,
+      time,
+    );
   }
 
   @Get(':id')

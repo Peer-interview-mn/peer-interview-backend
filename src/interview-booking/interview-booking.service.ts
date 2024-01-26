@@ -127,7 +127,7 @@ export class InterviewBookingService {
     return booking;
   }
 
-  async suggestMe(userId: string, time: string) {
+  async suggestMe(id: string, userId: string, time: string) {
     const baseMoment = moment.tz(time, 'UTC');
     // const desiredHour = baseMoment.get('hour');
 
@@ -157,6 +157,66 @@ export class InterviewBookingService {
     return availableDates;
   }
 
+  async getSuggestTimeByDay(id: string, userId: string, date: string) {
+    const selectedDate = moment.tz(date, 'UTC');
+    const startOfDay = selectedDate.clone().startOf('day');
+    const endOfDay = selectedDate.clone().endOf('day');
+
+    const compareData = await this.interviewBookingModel
+      .findOne({
+        _id: id,
+        userId: userId,
+      })
+      .populate({ path: 'userId', select: 'userName skills experience' })
+      .lean();
+
+    if (!compareData)
+      throw new HttpException('not found', HttpStatus.NOT_FOUND);
+
+    const datas = await this.interviewBookingModel
+      .find({
+        userId: { $ne: new ObjectId(userId) },
+        date: {
+          $gte: startOfDay.toDate(),
+          $lte: endOfDay.toDate(),
+        },
+      })
+      .sort({ time: 1 })
+      .populate({ path: 'userId', select: 'userName skills experience' })
+      .lean();
+
+    const points = this.calculateMatchScore(compareData, datas);
+    return { data: datas, points: points };
+  }
+
+  async calculateMatchScore(
+    compareData: InterviewBooking,
+    data: InterviewBooking[],
+  ) {
+    if (!data.length) return [];
+    const arr = [];
+    console.log('item: ' + compareData['doc']);
+    for (const item of data) {
+      // for (const i = 0; i < data.length; data) {
+
+      let basePoint = 0;
+      if (item.skill_type === compareData.skill_type) {
+        basePoint += 2;
+      }
+      if (item.interview_type === compareData.interview_type) {
+        basePoint += 2;
+      }
+      const skills1 = new Set(item.userId['skills']);
+      const skills2 = new Set(compareData.userId['skills']);
+      const commonSkills = [...skills1].filter((skill) => skills2.has(skill));
+      const skillPoint =
+        (commonSkills.length / Math.max(skills1.size, skills2.size)) * 100;
+      console.log('skills point: ', skillPoint);
+      arr.push(skillPoint + basePoint);
+    }
+    return arr;
+  }
+
   async update(
     userId: string,
     id: string,
@@ -184,7 +244,7 @@ export class InterviewBookingService {
         if (cond) {
           const baseMoment = moment.tz(date, 'UTC');
           const desiredHour = baseMoment.get('hour');
-          booking.time = `${desiredHour}`;
+          booking.time = desiredHour;
         }
       }
 
