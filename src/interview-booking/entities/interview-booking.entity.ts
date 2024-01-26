@@ -1,6 +1,10 @@
 import { BaseData } from '@/shared';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { InterviewBookingProcessType } from '@/interview-booking/enums/index.enum';
+import {
+  InterviewBookingProcessType,
+  InterviewType,
+  SkillType,
+} from '@/interview-booking/enums/index.enum';
 
 @Schema({ timestamps: true })
 export class InterviewBooking extends BaseData {
@@ -11,16 +15,13 @@ export class InterviewBooking extends BaseData {
   })
   process: string;
 
-  @Prop({ type: Boolean, default: false })
-  withFriend: boolean;
-
   @Prop({ type: 'ObjectId', ref: 'User' })
   userId: string;
 
-  @Prop({ Type: String })
+  @Prop({ type: String, enum: SkillType, default: SkillType.HARD })
   skill_type: string;
 
-  @Prop({ Type: String })
+  @Prop({ type: String, enum: InterviewType, default: InterviewType.PEERS })
   interview_type: string;
 
   @Prop({ type: Date })

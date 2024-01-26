@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { CreateInterviewBookingDto } from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -16,20 +21,17 @@ export class InterviewBookingService {
     private readonly interviewBookingModel: Model<InterviewBooking>,
   ) {}
 
-  async create(
-    userId: string,
-    createInterviewBookingDto: CreateInterviewBookingDto,
-  ) {
-    const { date } = createInterviewBookingDto;
+  async helpsToCheckDate(id: string, date: Date, userId: string) {
     const baseMoment = moment.tz(date, 'UTC');
-    const desiredHour = baseMoment.get('hour');
-    const twoHoursBefore = baseMoment.subtract(2, 'hours');
+    const twoHoursBefore = baseMoment.clone().subtract(2, 'hours');
+    const twoHoursAfter = baseMoment.clone().add(2, 'hours');
 
     const beforeHave = await this.interviewBookingModel.find({
-      userId: userId,
+      _id: { $ne: new ObjectId(id) },
+      userId: new ObjectId(userId),
       date: {
         $gte: twoHoursBefore,
-        $lte: date,
+        $lte: twoHoursAfter,
       },
       process: {
         $in: [
@@ -66,12 +68,35 @@ export class InterviewBookingService {
       );
     }
 
-    const booking = new this.interviewBookingModel({
-      userId,
-      time: desiredHour,
-      ...createInterviewBookingDto,
-    });
-    return await booking.save();
+    return true;
+  }
+
+  async create(
+    userId: string,
+    createInterviewBookingDto: CreateInterviewBookingDto,
+  ) {
+    try {
+      const foundBooking = await this.interviewBookingModel.findOne({
+        userId: userId,
+        date: null,
+      });
+
+      if (!foundBooking) {
+        const newBooking = new this.interviewBookingModel({
+          userId,
+          ...createInterviewBookingDto,
+        });
+
+        await newBooking.save();
+        return newBooking;
+      }
+
+      Object.assign(foundBooking, createInterviewBookingDto);
+      await foundBooking.save();
+      return foundBooking;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   async findAll() {
@@ -137,24 +162,38 @@ export class InterviewBookingService {
     id: string,
     updateInterviewBookingDto: UpdateInterviewBookingDto,
   ) {
-    const booking = await this.interviewBookingModel.findOne({
-      _id: id,
-      userId: userId,
-    });
+    const { date } = updateInterviewBookingDto;
+    try {
+      const booking = await this.interviewBookingModel.findOne({
+        _id: id,
+        userId: userId,
+      });
 
-    if (!booking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
-    if (
-      booking.process === InterviewBookingProcessType.MATCHED ||
-      booking.process === InterviewBookingProcessType.FAILED
-    )
-      throw new HttpException(
-        'This interview booking cannot be changed',
-        HttpStatus.BAD_REQUEST,
-      );
+      if (!booking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      if (
+        booking.process === InterviewBookingProcessType.MATCHED ||
+        booking.process === InterviewBookingProcessType.FAILED
+      )
+        throw new HttpException(
+          'This interview booking cannot be changed',
+          HttpStatus.BAD_REQUEST,
+        );
 
-    Object.assign(booking, updateInterviewBookingDto);
-    await booking.save();
-    return booking;
+      if (updateInterviewBookingDto.date) {
+        const cond = await this.helpsToCheckDate(id, date, userId);
+        if (cond) {
+          const baseMoment = moment.tz(date, 'UTC');
+          const desiredHour = baseMoment.get('hour');
+          booking.time = `${desiredHour}`;
+        }
+      }
+
+      Object.assign(booking, updateInterviewBookingDto);
+      await booking.save();
+      return booking;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   async remove(userId, id: string) {
