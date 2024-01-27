@@ -173,20 +173,81 @@ export class InterviewBookingService {
     if (!compareData)
       throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
-    const datas = await this.interviewBookingModel
-      .find({
-        userId: { $ne: new ObjectId(userId) },
-        date: {
-          $gte: startOfDay.toDate(),
-          $lte: endOfDay.toDate(),
-        },
-      })
-      .sort({ time: 1 })
-      .populate({ path: 'userId', select: 'userName skills experience' })
-      .lean();
+    // const datas = await this.interviewBookingModel
+    //   .find({
+    //     userId: { $ne: new ObjectId(userId) },
+    //     date: {
+    //       $gte: startOfDay.toDate(),
+    //       $lte: endOfDay.toDate(),
+    //     },
+    //   })
+    //   .sort({ date: 1 })
+    //   .populate({ path: 'userId', select: 'userName skills experience' })
+    //   .lean();
 
-    const points = this.calculateMatchScore(compareData, datas);
-    return { data: datas, points: points };
+    const datas = await this.interviewBookingModel.aggregate([
+      {
+        $match: {
+          userId: { $ne: new ObjectId(userId) },
+          date: {
+            $gte: startOfDay.toDate(),
+            $lte: endOfDay.toDate(),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            time: {
+              $dateToString: {
+                format: '%H:%M:%S',
+                date: '$date',
+              },
+            },
+          },
+          data: { $push: '$$ROOT' },
+        },
+      },
+      {
+        $sort: {
+          '_id.time': 1,
+        },
+      },
+      {
+        $unwind: '$data',
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'data.userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      {
+        $unwind: '$user',
+      },
+      {
+        $project: {
+          _id: 1,
+          'data.userId': 1,
+          'data.date': 1,
+          'data.time': 1,
+          'data.user': {
+            userName: '$user.userName',
+            skills: '$user.skills',
+            experience: '$user.experience',
+          },
+        },
+      },
+    ]);
+
+    // console.log('compare Date: =========> ', compareData);
+    // console.log('datas Date: =========> ', datas);
+
+    // const points = await this.calculateMatchScore(compareData, datas);
+    // return { data: datas, points: points };
+    return { data: datas };
   }
 
   async calculateMatchScore(
@@ -195,23 +256,35 @@ export class InterviewBookingService {
   ) {
     if (!data.length) return [];
     const arr = [];
-    console.log('item: ' + compareData['doc']);
     for (const item of data) {
-      // for (const i = 0; i < data.length; data) {
+      console.log(item.skill_type, '<----->', compareData.skill_type);
+      console.log(item.interview_type, '<----->', compareData.interview_type);
 
       let basePoint = 0;
       if (item.skill_type === compareData.skill_type) {
+        console.log('iishee orsonguie');
+
         basePoint += 2;
+        console.log('base: ', basePoint);
       }
+      console.log('base1: ', basePoint);
       if (item.interview_type === compareData.interview_type) {
         basePoint += 2;
       }
+      console.log('base2: ', basePoint);
+
       const skills1 = new Set(item.userId['skills']);
       const skills2 = new Set(compareData.userId['skills']);
+      console.log('skills1: ', skills1);
+      console.log('skills2: ', skills2);
+
       const commonSkills = [...skills1].filter((skill) => skills2.has(skill));
       const skillPoint =
         (commonSkills.length / Math.max(skills1.size, skills2.size)) * 100;
+      console.log('base3: ', basePoint);
       console.log('skills point: ', skillPoint);
+      console.log('final: ', skillPoint + basePoint);
+
       arr.push(skillPoint + basePoint);
     }
     return arr;
