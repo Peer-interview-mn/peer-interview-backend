@@ -129,7 +129,6 @@ export class InterviewBookingService {
 
   async suggestMe(id: string, userId: string, time: string) {
     const baseMoment = moment.tz(time, 'UTC');
-    // const desiredHour = baseMoment.get('hour');
 
     const compareData = await this.interviewBookingModel
       .findOne({
@@ -273,12 +272,17 @@ export class InterviewBookingService {
 
   async calculateMatchScore(compareData: InterviewBooking, data: any[]) {
     if (!data.length) return [];
+
     const arr = [];
     const compareSkills = new Set(compareData.userId['skills']);
+
     for (let i = 0; i < data.length; i++) {
       let maxPoint = 0;
+      let maxData: any;
+
       for (const item of data[i].data) {
         let basePoint = 0;
+
         if (item.skill_type === compareData.skill_type) {
           basePoint += 2;
         }
@@ -292,19 +296,23 @@ export class InterviewBookingService {
         const commonSkills = [...skills1].filter((skill) =>
           compareSkills.has(skill),
         );
+
         const skillPoint = parseFloat(
           (
             commonSkills.length / Math.max(skills1.size, compareSkills.size)
           ).toFixed(2),
         );
 
-        maxPoint = Math.max(maxPoint, skillPoint + basePoint);
+        if (maxPoint <= skillPoint + basePoint) {
+          maxPoint = skillPoint + basePoint;
+          maxData = item;
+        }
       }
-      arr.push({ _id: data[i]._id, maxPoint });
+
+      arr.push({ _id: data[i]._id, maxPoint, date: maxData?.date });
       maxPoint = 0;
     }
 
-    if (!arr.length) return [];
     return arr;
   }
 
