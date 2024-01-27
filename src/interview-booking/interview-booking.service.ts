@@ -131,6 +131,17 @@ export class InterviewBookingService {
     const baseMoment = moment.tz(time, 'UTC');
     // const desiredHour = baseMoment.get('hour');
 
+    const compareData = await this.interviewBookingModel
+      .findOne({
+        _id: id,
+        userId: userId,
+      })
+      .populate({ path: 'userId', select: 'userName skills experience' })
+      .lean();
+
+    if (!compareData)
+      throw new HttpException('not found', HttpStatus.NOT_FOUND);
+
     const availableDates = await this.interviewBookingModel.aggregate([
       {
         $match: {
@@ -142,6 +153,33 @@ export class InterviewBookingService {
         },
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      {
+        $unwind: '$user',
+      },
+      {
+        $project: {
+          userName: '$user.userName',
+          skills: '$user.skills',
+          experience: '$user.experience',
+          userId: 1,
+          date: 1,
+          time: 1,
+          process: 1,
+          skill_type: 1,
+          interview_type: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          __v: 1,
+        },
+      },
+      {
         $group: {
           _id: {
             $dateToString: {
@@ -149,12 +187,13 @@ export class InterviewBookingService {
               date: '$date',
             },
           },
-          dayData: { $push: '$$ROOT' },
+          data: { $push: '$$ROOT' },
         },
       },
     ]);
 
-    return availableDates;
+    const points = await this.calculateMatchScore(compareData, availableDates);
+    return { points };
   }
 
   async getSuggestTimeByDay(id: string, userId: string, date: string) {
@@ -173,18 +212,6 @@ export class InterviewBookingService {
     if (!compareData)
       throw new HttpException('not found', HttpStatus.NOT_FOUND);
 
-    // const datas = await this.interviewBookingModel
-    //   .find({
-    //     userId: { $ne: new ObjectId(userId) },
-    //     date: {
-    //       $gte: startOfDay.toDate(),
-    //       $lte: endOfDay.toDate(),
-    //     },
-    //   })
-    //   .sort({ date: 1 })
-    //   .populate({ path: 'userId', select: 'userName skills experience' })
-    //   .lean();
-
     const datas = await this.interviewBookingModel.aggregate([
       {
         $match: {
@@ -196,13 +223,38 @@ export class InterviewBookingService {
         },
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      {
+        $unwind: '$user',
+      },
+      {
+        $project: {
+          userName: '$user.userName',
+          skills: '$user.skills',
+          experience: '$user.experience',
+          userId: 1,
+          date: 1,
+          time: 1,
+          process: 1,
+          skill_type: 1,
+          interview_type: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          __v: 1,
+        },
+      },
+      {
         $group: {
           _id: {
-            time: {
-              $dateToString: {
-                format: '%H:%M:%S',
-                date: '$date',
-              },
+            $dateToString: {
+              format: '%H:%M:%S',
+              date: '$date',
             },
           },
           data: { $push: '$$ROOT' },
@@ -213,80 +265,46 @@ export class InterviewBookingService {
           '_id.time': 1,
         },
       },
-      {
-        $unwind: '$data',
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'data.userId',
-          foreignField: '_id',
-          as: 'user',
-        },
-      },
-      {
-        $unwind: '$user',
-      },
-      {
-        $project: {
-          _id: 1,
-          'data.userId': 1,
-          'data.date': 1,
-          'data.time': 1,
-          'data.user': {
-            userName: '$user.userName',
-            skills: '$user.skills',
-            experience: '$user.experience',
-          },
-        },
-      },
     ]);
 
-    // console.log('compare Date: =========> ', compareData);
-    // console.log('datas Date: =========> ', datas);
-
-    // const points = await this.calculateMatchScore(compareData, datas);
-    // return { data: datas, points: points };
-    return { data: datas };
+    const points = await this.calculateMatchScore(compareData, datas);
+    return { points };
   }
 
-  async calculateMatchScore(
-    compareData: InterviewBooking,
-    data: InterviewBooking[],
-  ) {
+  async calculateMatchScore(compareData: InterviewBooking, data: any[]) {
     if (!data.length) return [];
     const arr = [];
-    for (const item of data) {
-      console.log(item.skill_type, '<----->', compareData.skill_type);
-      console.log(item.interview_type, '<----->', compareData.interview_type);
+    const compareSkills = new Set(compareData.userId['skills']);
+    for (let i = 0; i < data.length; i++) {
+      let maxPoint = 0;
+      for (const item of data[i].data) {
+        let basePoint = 0;
+        if (item.skill_type === compareData.skill_type) {
+          basePoint += 2;
+        }
 
-      let basePoint = 0;
-      if (item.skill_type === compareData.skill_type) {
-        console.log('iishee orsonguie');
+        if (item.interview_type === compareData.interview_type) {
+          basePoint += 2;
+        }
 
-        basePoint += 2;
-        console.log('base: ', basePoint);
+        const skills1 = new Set(item.skills);
+
+        const commonSkills = [...skills1].filter((skill) =>
+          compareSkills.has(skill),
+        );
+        const skillPoint = parseFloat(
+          (
+            commonSkills.length / Math.max(skills1.size, compareSkills.size)
+          ).toFixed(2),
+        );
+
+        maxPoint = Math.max(maxPoint, skillPoint + basePoint);
       }
-      console.log('base1: ', basePoint);
-      if (item.interview_type === compareData.interview_type) {
-        basePoint += 2;
-      }
-      console.log('base2: ', basePoint);
-
-      const skills1 = new Set(item.userId['skills']);
-      const skills2 = new Set(compareData.userId['skills']);
-      console.log('skills1: ', skills1);
-      console.log('skills2: ', skills2);
-
-      const commonSkills = [...skills1].filter((skill) => skills2.has(skill));
-      const skillPoint =
-        (commonSkills.length / Math.max(skills1.size, skills2.size)) * 100;
-      console.log('base3: ', basePoint);
-      console.log('skills point: ', skillPoint);
-      console.log('final: ', skillPoint + basePoint);
-
-      arr.push(skillPoint + basePoint);
+      arr.push({ _id: data[i]._id, maxPoint });
+      maxPoint = 0;
     }
+
+    if (!arr.length) return [];
     return arr;
   }
 
