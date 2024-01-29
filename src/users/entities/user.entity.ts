@@ -17,12 +17,6 @@ export class Social {
 }
 
 @Schema({ timestamps: true })
-export class Skill {
-  @Prop({ lowercase: true })
-  name: string;
-}
-
-@Schema({ timestamps: true })
 export class User extends BaseData {
   @Prop({ lowercase: true })
   firstName: string;
@@ -58,8 +52,8 @@ export class User extends BaseData {
   @Prop({ default: null })
   role: string;
 
-  @Prop()
-  interview_skill: string;
+  @Prop({ default: [] })
+  interview_skill: string[];
 
   @Prop()
   description: string;

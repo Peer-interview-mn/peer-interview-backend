@@ -33,9 +33,8 @@ export class UpdateUserInput {
   @IsString({ message: 'The description must be a string' })
   description: string;
 
-  @ApiProperty({})
-  @IsString({ message: 'The description must be a string' })
-  interview_skill: string;
+  @ApiProperty({ type: [String] })
+  interview_skill: string[];
 
   @ApiProperty({})
   @IsString({ message: 'The description must be a string' })

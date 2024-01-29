@@ -123,7 +123,7 @@ export class UsersService {
       await user.save();
       return user;
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
