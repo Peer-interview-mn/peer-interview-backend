@@ -21,6 +21,7 @@ import { MailerService } from '@/mailer/mailer.service';
 import { User } from '@/users/entities/user.entity';
 import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
+import { AccountVerifyCode } from '@/mailer/templateFuc';
 
 @Injectable()
 export class AuthService {
@@ -226,13 +227,9 @@ export class AuthService {
 
       const sendMail = await this.mailerService.sendMail({
         toMail: email,
-        subject: 'Mail verify code',
+        subject: 'Peer to Peer Platform - OTP',
         text: 'welcome my friend',
-        html: `
-        <div style="text-align: center">
-          <h1>Welcome Peer Interview </h1>
-          <br/><p>your account verify code: ${code.code}</p>
-        </div>`,
+        html: AccountVerifyCode(code.code),
       });
       if (sendMail)
         return {
