@@ -43,7 +43,7 @@ export class User extends BaseData {
   profileImg: string;
 
   @Prop({
-    type: 'string',
+    type: String,
     enum: UserSystemRoleType,
     default: UserSystemRoleType.USER,
   })

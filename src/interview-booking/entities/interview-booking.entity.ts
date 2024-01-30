@@ -18,6 +18,15 @@ export class InterviewBooking extends BaseData {
   @Prop({ type: 'ObjectId', ref: 'User' })
   userId: string;
 
+  @Prop({ type: 'ObjectId', ref: 'User', default: null })
+  connection_userId: string;
+
+  @Prop({ type: String })
+  invite_url: string;
+
+  @Prop({ type: [String] })
+  invite_users: string[];
+
   @Prop({ type: String, enum: SkillType, default: SkillType.HARD })
   skill_type: string;
 
@@ -33,12 +42,3 @@ export class InterviewBooking extends BaseData {
 
 export const InterviewBookingSchema =
   SchemaFactory.createForClass(InterviewBooking);
-
-/*
-1. bi 30ni 15 tsagt hard skill ogno
-
-2. bat 30ni 15 tsagt hard skill ogno
-dorj 30ni 15 tsagt hard skill ogno
-
-bi bat 30ni 15 tsagt hard skill interview
-* */

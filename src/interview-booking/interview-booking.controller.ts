@@ -10,7 +10,10 @@ import {
   Request,
 } from '@nestjs/common';
 import { InterviewBookingService } from './interview-booking.service';
-import { CreateInterviewBookingDto } from './dto/create-interview-booking.dto';
+import {
+  CreateInterviewBookingDto,
+  InviteToBookingDto,
+} from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -103,5 +106,32 @@ export class InterviewBookingController {
   async remove(@Request() req, @Param('id') id: string) {
     const userId = req.user._id;
     return await this.interviewBookingService.remove(userId, id);
+  }
+
+  @ApiBearerAuth()
+  @Post('invite-to-interview-booking')
+  @UseGuards(AuthGuard('jwt'))
+  async inviteToBooking(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() inviteToBookingDto: InviteToBookingDto,
+  ) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.inviteToBooking(
+      id,
+      userId,
+      inviteToBookingDto.email,
+    );
+  }
+
+  @Post('accept-to-booking-invite')
+  async acceptedToBookingInvite(
+    @Param('id') id: string,
+    @Body() inviteToBookingDto: InviteToBookingDto,
+  ) {
+    return await this.interviewBookingService.acceptedToBookingInvite(
+      id,
+      inviteToBookingDto.email,
+    );
   }
 }

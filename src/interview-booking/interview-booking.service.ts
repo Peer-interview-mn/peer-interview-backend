@@ -11,6 +11,9 @@ import { InterviewBooking } from '@/interview-booking/entities/interview-booking
 import { Model, Types } from 'mongoose';
 import * as moment from 'moment-timezone';
 import { InterviewBookingProcessType } from '@/interview-booking/enums/index.enum';
+import { MailerService } from '@/mailer/mailer.service';
+import { InviteFriend } from '@/mailer/templateFuc/InviteFriend';
+import { UsersService } from '@/users/users.service';
 
 const { ObjectId } = Types;
 
@@ -19,6 +22,8 @@ export class InterviewBookingService {
   constructor(
     @InjectModel(InterviewBooking.name)
     private readonly interviewBookingModel: Model<InterviewBooking>,
+    private mailerService: MailerService,
+    private usersService: UsersService,
   ) {}
 
   async helpsToCheckDate(id: string, date: Date, userId: string) {
@@ -362,5 +367,70 @@ export class InterviewBookingService {
     });
     if (!delBooking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
     return delBooking;
+  }
+
+  async inviteToBooking(id: string, userId: string, email: string) {
+    try {
+      const booking = await this.interviewBookingModel.findOne({
+        _id: id,
+        userId: userId,
+      });
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      const invitationLink = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
+      const emailSent = await this.mailerService.sendMail({
+        toMail: email,
+        subject: 'Invitation to Friend to Friend Interview',
+        text: 'You have been invited to join a meeting.',
+        html: InviteFriend(invitationLink),
+      });
+
+      if (!emailSent) {
+        return { success: false, message: 'Failed to send invitation email.' };
+      }
+
+      booking.invite_users.push(email);
+      await booking.save();
+
+      return { success: true, booking };
+    } catch (e) {
+      throw new BadRequestException(`Error inviting to booking: ${e.message}`);
+    }
+  }
+
+  async acceptedToBookingInvite(id: string, email: string) {
+    try {
+      const booking = await this.interviewBookingModel.findById(id);
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (booking.connection_userId) {
+        throw new HttpException(
+          'Oops!. This booking bas already been matched',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const acceptingUser = await this.usersService.findOne(email);
+      if (!acceptingUser) {
+        throw new HttpException(
+          'This email is not registered. Please register on this platform to accept the invitation.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      booking.connection_userId = acceptingUser._id;
+      await booking.save();
+      return booking;
+    } catch (e) {
+      throw new BadRequestException(
+        `Error accepting booking invite: ${e.message}`,
+      );
+    }
   }
 }

@@ -11,3 +11,9 @@ export class CreateInterviewBookingDto {
   @IsString({ message: 'The interview_type must be a string' })
   interview_type: string;
 }
+
+export class InviteToBookingDto {
+  @ApiProperty({})
+  @IsString({ message: 'The email must be a string' })
+  email: string;
+}

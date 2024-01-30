@@ -6,9 +6,12 @@ import {
   InterviewBooking,
   InterviewBookingSchema,
 } from '@/interview-booking/entities/interview-booking.entity';
+import { MailerService } from '@/mailer/mailer.service';
+import { UsersModule } from '@/users/users.module';
 
 @Module({
   imports: [
+    UsersModule,
     MongooseModule.forFeatureAsync([
       {
         name: InterviewBooking.name,
@@ -20,6 +23,6 @@ import {
     ]),
   ],
   controllers: [InterviewBookingController],
-  providers: [InterviewBookingService],
+  providers: [InterviewBookingService, MailerService],
 })
 export class InterviewBookingModule {}
