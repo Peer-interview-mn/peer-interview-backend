@@ -21,7 +21,7 @@ import { MailerService } from '@/mailer/mailer.service';
 import { User } from '@/users/entities/user.entity';
 import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
-import { AccountVerifyCode } from '@/mailer/templateFuc';
+import { AccountVerifyCode, ForgotPassword } from '@/mailer/templateFuc';
 
 @Injectable()
 export class AuthService {
@@ -226,9 +226,9 @@ export class AuthService {
       await user.save();
 
       const sendMail = await this.mailerService.sendMail({
-        toMail: email,
+        toMail: 'dashmandalsaikhanbileg@gmail.com',
         subject: 'Peer to Peer Platform - OTP',
-        text: 'welcome my friend',
+        text: 'Verify account OTP',
         html: AccountVerifyCode(code.code),
       });
       if (sendMail)
@@ -290,12 +290,11 @@ export class AuthService {
       const resetToken = await user.generatePasswordChangeToken();
       await user.save();
 
-      const message = `hello.<br>your password reset code is: ${resetToken}`;
       const sendMail = await this.mailerService.sendMail({
         toMail: email,
-        subject: 'forgot password',
+        subject: 'Peer to Peer Platform - Forgot password',
         text: 'Password change token',
-        html: message,
+        html: ForgotPassword(resetToken),
       });
 
       if (user && sendMail)
