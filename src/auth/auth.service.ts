@@ -226,7 +226,7 @@ export class AuthService {
       await user.save();
 
       const sendMail = await this.mailerService.sendMail({
-        toMail: 'dashmandalsaikhanbileg@gmail.com',
+        toMail: email,
         subject: 'Peer to Peer Platform - OTP',
         text: 'Verify account OTP',
         html: AccountVerifyCode(code.code),
