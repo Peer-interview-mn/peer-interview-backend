@@ -327,6 +327,7 @@ export class InterviewBookingService {
     updateInterviewBookingDto: UpdateInterviewBookingDto,
   ) {
     const { date } = updateInterviewBookingDto;
+    const invitationLink = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
     try {
       const booking = await this.interviewBookingModel.findOne({
         _id: id,
@@ -353,6 +354,7 @@ export class InterviewBookingService {
       }
 
       Object.assign(booking, updateInterviewBookingDto);
+      booking.invite_url = invitationLink;
       await booking.save();
       return booking;
     } catch (e) {
@@ -378,6 +380,13 @@ export class InterviewBookingService {
 
       if (!booking) {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (booking.invite_url.length > 5) {
+        throw new HttpException(
+          'Friend invite limit reached',
+          HttpStatus.BAD_GATEWAY,
+        );
       }
 
       const invitationLink = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
