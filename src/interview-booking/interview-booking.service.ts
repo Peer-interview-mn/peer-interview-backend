@@ -327,7 +327,6 @@ export class InterviewBookingService {
     updateInterviewBookingDto: UpdateInterviewBookingDto,
   ) {
     const { date } = updateInterviewBookingDto;
-    const invitationLink = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
     try {
       const booking = await this.interviewBookingModel.findOne({
         _id: id,
@@ -354,7 +353,11 @@ export class InterviewBookingService {
       }
 
       Object.assign(booking, updateInterviewBookingDto);
-      booking.invite_url = invitationLink;
+
+      if (!booking.invite_url) {
+        booking.invite_url = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
+      }
+
       await booking.save();
       return booking;
     } catch (e) {
