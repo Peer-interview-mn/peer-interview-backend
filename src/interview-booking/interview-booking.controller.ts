@@ -109,7 +109,7 @@ export class InterviewBookingController {
   }
 
   @ApiBearerAuth()
-  @Post('invite-to-interview-booking')
+  @Post('invite-to-interview-booking/:id')
   @UseGuards(AuthGuard('jwt'))
   async inviteToBooking(
     @Request() req,
@@ -117,6 +117,7 @@ export class InterviewBookingController {
     @Body() inviteToBookingDto: InviteToBookingDto,
   ) {
     const userId = req.user._id;
+    console.log('id: ', id, userId);
     return await this.interviewBookingService.inviteToBooking(
       id,
       userId,
@@ -124,7 +125,7 @@ export class InterviewBookingController {
     );
   }
 
-  @Post('accept-to-booking-invite')
+  @Post('accept-to-booking-invite/:id')
   async acceptedToBookingInvite(
     @Param('id') id: string,
     @Body() inviteToBookingDto: InviteToBookingDto,

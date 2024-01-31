@@ -425,6 +425,7 @@ export class InterviewBookingService {
       }
 
       booking.connection_userId = acceptingUser._id;
+      booking.process = InterviewBookingProcessType.MATCHED;
       await booking.save();
       return booking;
     } catch (e) {
