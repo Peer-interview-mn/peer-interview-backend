@@ -33,7 +33,7 @@ export class User extends BaseData {
   @Prop({ lowercase: true })
   country: string;
 
-  @Prop({})
+  @Prop({ type: String, default: 'UTC' })
   time_zone: string;
 
   @Prop()

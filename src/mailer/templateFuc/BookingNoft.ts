@@ -15,13 +15,13 @@ export const BookingNotification = (
                     Dear <b>${userName}</b> <br><br>
                     I hope this email finds you well. We are excited to confirm your upcoming Peer-to-Peer Hard Skill Interview scheduled for January 19, 2024. We appreciate your interest in showcasing your skills and talents with your peer/friend.
                     <br><br>
-                    <b>Interview Details:</b> <br><br>
-                    Date: ${date} January 19, 2024<br>
-                    Time: ${time}<br>
-                    Location: ${link}<br>
-                    <b>How to Join</b>: To join the interview, please click on the following link: [Insert Interview Link]. Please make sure to be available at the designated location on time.
-                    <br><br>
-                    If you have any questions or issues, feel free to contact us. We look forward to seeing you at the meeting!
+                    <b>Interview Details:</b>
+                    <ul>
+                        <li>Date: ${date}<br></li>
+                        <li>Time: ${time}<br></li>
+                        <li>Location: ${link}<br></li>
+                    </ul>
+                    <b>How to Join</b>: To join the interview, please click on the following link: ${link}. Please make sure to be available at the designated location on time.
                   </p>
                 </td>
               </tr>

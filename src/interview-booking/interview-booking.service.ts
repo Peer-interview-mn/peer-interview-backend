@@ -14,6 +14,7 @@ import { InterviewBookingProcessType } from '@/interview-booking/enums/index.enu
 import { MailerService } from '@/mailer/mailer.service';
 import { InviteFriend } from '@/mailer/templateFuc/InviteFriend';
 import { UsersService } from '@/users/users.service';
+import { BookingNotification } from '@/mailer/templateFuc/BookingNoft';
 
 const { ObjectId } = Types;
 
@@ -328,10 +329,13 @@ export class InterviewBookingService {
   ) {
     const { date } = updateInterviewBookingDto;
     try {
-      const booking = await this.interviewBookingModel.findOne({
-        _id: id,
-        userId: userId,
-      });
+      const booking = await this.interviewBookingModel
+        .findOne({
+          _id: id,
+          userId: userId,
+        })
+        .populate({ path: 'userId', select: 'email userName time_zone' })
+        .exec();
 
       if (!booking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
       if (
@@ -348,7 +352,24 @@ export class InterviewBookingService {
         if (cond) {
           const baseMoment = moment.tz(date, 'UTC');
           const desiredHour = baseMoment.get('hour');
+          const userDate = moment.tz(
+            date,
+            booking.userId['time_zone'] || 'UTC',
+          );
           booking.time = desiredHour;
+          const userHour = userDate.format('hh:mm A');
+
+          await this.mailerService.sendMail({
+            toMail: booking.userId['email'],
+            subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
+            text: 'You have been booked meeting.',
+            html: BookingNotification(
+              booking.userId['userName'],
+              userDate.format('MMMM DD, YYYY'),
+              userHour,
+              'https://www.peerinterview.io/app',
+            ),
+          });
         }
       }
 
