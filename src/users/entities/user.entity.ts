@@ -33,6 +33,9 @@ export class User extends BaseData {
   @Prop({ lowercase: true })
   country: string;
 
+  @Prop({})
+  time_zone: string;
+
   @Prop()
   experience: number;
 

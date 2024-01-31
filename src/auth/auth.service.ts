@@ -87,11 +87,22 @@ export class AuthService {
       userName: userName,
     });
 
-    if (haveUser)
+    if (haveUser) {
+      if (
+        !haveUser.verifyAccount &&
+        haveUser.lastName === lastName.toLowerCase() &&
+        haveUser.firstName === firstName.toLowerCase() &&
+        haveUser.userName === userName.toLowerCase()
+      ) {
+        haveUser.email = email;
+        await haveUser.save();
+        return haveUser;
+      }
       throw new HttpException(
         `this ${email} mail already exists`,
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     if (haveUserName) {
       if (
@@ -177,7 +188,10 @@ export class AuthService {
       const checkUser = await this.usersService.findOneCheck(email);
 
       if (!checkUser)
-        throw new HttpException('invalid user', HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          "This user doesn't exist. Please make sure your email address.",
+          HttpStatus.NOT_FOUND,
+        );
 
       if (!checkUser.verifyAccount)
         throw new HttpException(
@@ -262,7 +276,11 @@ export class AuthService {
         );
 
       const verify = verifyCodeCheck(user, code);
-      if (!verify) throw new HttpException(`wrong code`, HttpStatus.NOT_FOUND);
+      if (!verify)
+        throw new HttpException(
+          `OTP code is wrong. Please make sure OTP Code again`,
+          HttpStatus.NOT_FOUND,
+        );
 
       user.verifyAccount = true;
       user.account_verify_code = null;

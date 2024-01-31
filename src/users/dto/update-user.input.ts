@@ -30,6 +30,10 @@ export class UpdateUserInput {
   location: string;
 
   @ApiProperty({})
+  @IsString({ message: 'The time zone must be a string' })
+  time_zone: string;
+
+  @ApiProperty({})
   @IsString({ message: 'The description must be a string' })
   description: string;
 
