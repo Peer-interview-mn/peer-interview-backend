@@ -135,4 +135,9 @@ export class InterviewBookingController {
       inviteToBookingDto.email,
     );
   }
+
+  @Get('check-invite-url/:id/:email')
+  async checkUrl(@Param('id') id: string, @Param('email') email: string) {
+    return await this.interviewBookingService.checkUrl(id, email);
+  }
 }

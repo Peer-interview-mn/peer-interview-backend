@@ -401,6 +401,43 @@ export class InterviewBookingService {
     }
   }
 
+  async checkUrl(id: string, email: string) {
+    try {
+      const booking = await this.interviewBookingModel.findById(id);
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+      if (booking.invite_url.includes(email)) {
+        throw new HttpException(
+          'Oops!. You are not invited',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      if (
+        booking.connection_userId ||
+        booking.process === InterviewBookingProcessType.MATCHED
+      ) {
+        throw new HttpException(
+          'Oops!. This booking bas already been matched',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const user = this.usersService.findOne(email);
+      if (!user) {
+        throw new HttpException(
+          'This email is not registered. Please register on this platform to accept the invitation.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return booking;
+    } catch (e) {
+      throw new BadRequestException(`Error inviting to booking: ${e.message}`);
+    }
+  }
+
   async acceptedToBookingInvite(id: string, email: string) {
     try {
       const booking = await this.interviewBookingModel.findById(id);
@@ -409,7 +446,17 @@ export class InterviewBookingService {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
 
-      if (booking.connection_userId) {
+      if (booking.invite_url.includes(email)) {
+        throw new HttpException(
+          'Oops!. You are not invited',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      if (
+        booking.connection_userId ||
+        booking.process === InterviewBookingProcessType.MATCHED
+      ) {
         throw new HttpException(
           'Oops!. This booking bas already been matched',
           HttpStatus.NOT_FOUND,
