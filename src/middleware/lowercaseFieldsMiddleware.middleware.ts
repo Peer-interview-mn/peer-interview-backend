@@ -10,7 +10,6 @@ export class LowercaseFieldsMiddleware implements NestMiddleware {
       req.body = this.convertToLowerCase(req.body, ['email', 'userName']);
     }
     if (req.params) {
-      console.log(req);
       req.params = this.convertToLowerCase(req.params, ['userName', 'email']);
     }
     next();

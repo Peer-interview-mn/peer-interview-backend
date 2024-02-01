@@ -117,7 +117,6 @@ export class InterviewBookingController {
     @Body() inviteToBookingDto: InviteToBookingDto,
   ) {
     const userId = req.user._id;
-    console.log('id: ', id, userId);
     return await this.interviewBookingService.inviteToBooking(
       id,
       userId,

@@ -1,5 +1,3 @@
-import { User } from '@/users/entities/user.entity';
-
 export const generateVerifyCode = () => {
   const digits = '0123456789';
   let AVC = '';
@@ -12,13 +10,8 @@ export const generateVerifyCode = () => {
   return { code: AVC, expireDate };
 };
 
-export const verifyCodeCheck = (user: User, clientCode: string): boolean => {
-  const { avc_expire, account_verify_code } = user;
-  if (!account_verify_code || !avc_expire) return false;
-
-  const nowDate = new Date();
-  const checkPass = clientCode === user.account_verify_code;
-
-  if (!checkPass || nowDate > avc_expire) return false;
-  return true;
+export const generatePasswordChangeCode = () => {
+  const code = generateVerifyCode();
+  const expireDate = new Date(Date.now() + 10 * 60 * 1000);
+  return { code: code.code, expireDate };
 };

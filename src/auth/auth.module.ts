@@ -7,9 +7,11 @@ import { AuthController } from './auth.controller';
 import { MailerModule } from '@/mailer/mailer.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '@/auth/jwt.strategy';
+import { OtpsModule } from '@/otps/otps.module';
 
 @Module({
   imports: [
+    OtpsModule,
     UsersModule,
     MailerModule,
     PassportModule,

@@ -1,0 +1,4 @@
+export enum OtpCodeType {
+  VERIFYACCOUNT = 'VERIFYACCOUNT',
+  RESETPASSWORD = 'RESETPASSWORD',
+}

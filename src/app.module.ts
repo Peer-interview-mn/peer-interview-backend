@@ -10,6 +10,7 @@ import { MailerModule } from './mailer/mailer.module';
 import { FileUploadModule } from './file-upload/file-upload.module';
 import { InterviewBookingModule } from './interview-booking/interview-booking.module';
 import { MatchModule } from './match/match.module';
+import { OtpsModule } from './otps/otps.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MatchModule } from './match/match.module';
     FileUploadModule,
     InterviewBookingModule,
     MatchModule,
+    OtpsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -15,13 +15,13 @@ import {
 } from './dto/create-auth.input';
 import { UsersService } from '@/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { generateVerifyCode, verifyCodeCheck } from '@/common/verifyCode';
-// import * as crypto from 'crypto';
 import { MailerService } from '@/mailer/mailer.service';
 import { User } from '@/users/entities/user.entity';
 import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
 import { AccountVerifyCode, ForgotPassword } from '@/mailer/templateFuc';
+import { OtpsService } from '@/otps/otps.service';
+import { OtpCodeType } from '@/otps/enums/index.enum';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +30,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private mailerService: MailerService,
+    private otpService: OtpsService,
   ) {}
 
   async googleTokenAuth(token: string) {
@@ -132,7 +133,7 @@ export class AuthService {
     try {
       const newUser = await this.usersService.create(createAuthInput);
       if (newUser) return newUser;
-      throw new HttpException('failed', HttpStatus.NOT_FOUND);
+      throw new HttpException('Something went wrong', HttpStatus.NOT_FOUND);
     } catch (e) {
       throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
@@ -187,17 +188,19 @@ export class AuthService {
     try {
       const checkUser = await this.usersService.findOneCheck(email);
 
-      if (!checkUser)
+      if (!checkUser) {
         throw new HttpException(
           "This user doesn't exist. Please make sure your email address.",
           HttpStatus.NOT_FOUND,
         );
+      }
 
-      if (!checkUser.verifyAccount)
+      if (!checkUser.verifyAccount) {
         throw new HttpException(
           'This account has not been verified!',
           HttpStatus.NOT_FOUND,
         );
+      }
 
       if (!checkUser.password) {
         throw new UnauthorizedException('email or password wrong');
@@ -221,11 +224,12 @@ export class AuthService {
     try {
       const user = await this.usersService.findOne(email);
 
-      if (!user)
+      if (!user) {
         throw new HttpException(
           'this ${email} not found. pls register',
           HttpStatus.NOT_FOUND,
         );
+      }
 
       if (user.verifyAccount)
         throw new HttpException(
@@ -233,11 +237,10 @@ export class AuthService {
           HttpStatus.NOT_FOUND,
         );
 
-      const code = generateVerifyCode();
-
-      user.account_verify_code = code.code;
-      user.avc_expire = code.expireDate;
-      await user.save();
+      const code = await this.otpService.createCode(
+        user._id,
+        OtpCodeType.VERIFYACCOUNT,
+      );
 
       const sendMail = await this.mailerService.sendMail({
         toMail: email,
@@ -254,7 +257,7 @@ export class AuthService {
         success: false,
       };
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -263,35 +266,41 @@ export class AuthService {
     try {
       const user = await this.usersService.findOne(email);
 
-      if (!user)
+      if (!user) {
         throw new HttpException(
           `this ${email} not found. pls register`,
           HttpStatus.NOT_FOUND,
         );
+      }
 
-      if (user.verifyAccount)
+      if (user.verifyAccount) {
         throw new HttpException(
           `this ${email} already verified`,
           HttpStatus.NOT_FOUND,
         );
+      }
 
-      const verify = verifyCodeCheck(user, code);
-      if (!verify)
+      const verify = await this.otpService.verifyCode(
+        user._id,
+        code,
+        OtpCodeType.VERIFYACCOUNT,
+      );
+
+      if (!verify) {
         throw new HttpException(
           `OTP code is wrong. Please make sure OTP Code again`,
           HttpStatus.NOT_FOUND,
         );
+      }
 
       user.verifyAccount = true;
-      user.account_verify_code = null;
-      user.avc_expire = null;
       await user.save();
 
       const token = await this.generateJwtToken(user);
       const refreshToken = await this.generateRefToken(user);
       return { access_token: token, refresh_token: refreshToken };
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -299,20 +308,23 @@ export class AuthService {
     try {
       const user = await this.usersService.findOne(email);
 
-      if (!user)
+      if (!user) {
         throw new HttpException(
           `this ${email} not found`,
           HttpStatus.NOT_FOUND,
         );
+      }
 
-      const resetToken = await user.generatePasswordChangeToken();
-      await user.save();
+      const resetToken = await this.otpService.createCode(
+        user._id,
+        OtpCodeType.RESETPASSWORD,
+      );
 
       const sendMail = await this.mailerService.sendMail({
         toMail: email,
         subject: 'Peer to Peer Platform - Forgot password',
         text: 'Password change token',
-        html: ForgotPassword(resetToken),
+        html: ForgotPassword(resetToken.code),
       });
 
       if (user && sendMail)
@@ -323,19 +335,21 @@ export class AuthService {
         success: false,
       };
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
   async checkResetOtp(input: CheckPassOtpInput) {
-    const user = await this.usersService.findByFields({
-      email: input.mail,
-      resetPasswordToken: input.resetPasswordOtp,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+    const user = await this.usersService.findOne(input.mail);
 
-    if (!user) throw new HttpException(`wrong code`, HttpStatus.NOT_FOUND);
-    return user;
+    if (!user) throw new HttpException(`User not found`, HttpStatus.NOT_FOUND);
+
+    const check = await this.otpService.checkVerifyCode(
+      user._id,
+      input.resetPasswordOtp,
+      OtpCodeType.RESETPASSWORD,
+    );
+    return check;
   }
 
   async resetPassword(changePasswordInput: ChangePasswordInput) {
@@ -346,31 +360,30 @@ export class AuthService {
         /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
       const isValid = passwordRegex.test(newPassword);
 
-      if (!isValid)
+      if (!isValid) {
         throw new HttpException(
           'The password must contain at least one uppercase letter, one special character, and one number.',
           HttpStatus.BAD_REQUEST,
         );
-      // const encrypted = crypto
-      //   .createHash('sha256')
-      //   .update(resetPasswordOtp)
-      //   .digest('hex');
+      }
 
-      const user = await this.usersService.findByFields({
-        _id: userId,
-        resetPasswordToken: resetPasswordOtp,
-        resetPasswordExpire: { $gt: Date.now() },
-      });
-      if (!user) throw new HttpException(`wrong code`, HttpStatus.NOT_FOUND);
+      const user = await this.usersService.findOneId(userId);
+
+      if (!user) {
+        throw new HttpException(`User not found`, HttpStatus.NOT_FOUND);
+      }
+      await this.otpService.verifyCode(
+        userId,
+        resetPasswordOtp,
+        OtpCodeType.RESETPASSWORD,
+      );
 
       user.password = newPassword;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
       await user.save();
 
       return user;
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -382,7 +395,9 @@ export class AuthService {
       });
 
       const user = await this.usersService.findOneId(subs.sub);
-      if (!user) throw new HttpException('invalid user', HttpStatus.NOT_FOUND);
+      if (!user) {
+        throw new HttpException('invalid user', HttpStatus.NOT_FOUND);
+      }
 
       const access_token = await this.generateJwtToken(user);
       return {
