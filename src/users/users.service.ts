@@ -132,4 +132,16 @@ export class UsersService {
     if (!user) throw new HttpException('not found user', HttpStatus.NOT_FOUND);
     return user;
   }
+
+  async checkFields(id: string) {
+    const requiredFields = ['experience', 'skills', 'role', 'country'];
+    const user = await this.userModel.findById(id);
+    if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+    for (const field of requiredFields) {
+      if (!user[field]) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

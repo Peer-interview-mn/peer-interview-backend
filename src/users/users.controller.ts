@@ -31,6 +31,14 @@ export class UsersController {
     return await this.usersService.me(userId);
   }
 
+  @ApiBearerAuth()
+  @Get('checkFields')
+  @UseGuards(AuthGuard('jwt'))
+  async checkFields(@Request() req) {
+    const userId = req.user._id;
+    return await this.usersService.checkFields(userId);
+  }
+
   @Get(':userName')
   async findName(@Param('userName') userName: string) {
     return await this.usersService.findByUserName(userName);
