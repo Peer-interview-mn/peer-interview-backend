@@ -203,20 +203,24 @@ export class AuthService {
       }
 
       if (!checkUser.password) {
-        throw new UnauthorizedException('email or password wrong');
+        throw new UnauthorizedException(
+          'Password not matched, Please make sure your passwords.',
+        );
       }
 
       const pass = await checkUser.comparePassword(password);
 
       if (!pass) {
-        throw new UnauthorizedException('email or password wrong');
+        throw new UnauthorizedException(
+          'Password not matched, Please make sure your passwords.',
+        );
       }
 
       const token = await this.generateJwtToken(checkUser);
       const refreshToken = await this.generateRefToken(checkUser);
       return { access_token: token, refresh_token: refreshToken };
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
