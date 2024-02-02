@@ -348,12 +348,12 @@ export class AuthService {
 
     if (!user) throw new HttpException(`User not found`, HttpStatus.NOT_FOUND);
 
-    const check = await this.otpService.checkVerifyCode(
+    await this.otpService.checkVerifyCode(
       user._id,
       input.resetPasswordOtp,
       OtpCodeType.RESETPASSWORD,
     );
-    return check;
+    return user;
   }
 
   async resetPassword(changePasswordInput: ChangePasswordInput) {
