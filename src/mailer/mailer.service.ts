@@ -28,7 +28,7 @@ export class MailerService {
     const fromMail = this.configService.get<string>('smtp.from');
     try {
       const send = await transport.sendMail({
-        to: toMail,
+        to: Array.isArray(toMail) ? toMail.join(', ') : toMail,
         from: fromMail,
         subject: subject,
         text: text,

@@ -1,7 +1,7 @@
 export class CreateMailerInput {}
 
 export type MailDto = {
-  toMail: string;
+  toMail: string | string[];
   subject: string;
   text: string;
   html: string;

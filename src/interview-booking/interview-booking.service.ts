@@ -10,7 +10,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { InterviewBooking } from '@/interview-booking/entities/interview-booking.entity';
 import { Model, Types } from 'mongoose';
 import * as moment from 'moment-timezone';
-import { InterviewBookingProcessType } from '@/interview-booking/enums/index.enum';
+import {
+  InterviewBookingProcessType,
+  InterviewType,
+} from '@/interview-booking/enums/index.enum';
 import { MailerService } from '@/mailer/mailer.service';
 import { InviteFriend } from '@/mailer/templateFuc/InviteFriend';
 import { UsersService } from '@/users/users.service';
@@ -36,8 +39,8 @@ export class InterviewBookingService {
       _id: { $ne: new ObjectId(id) },
       userId: new ObjectId(userId),
       date: {
-        $gte: twoHoursBefore,
-        $lte: twoHoursAfter,
+        $gte: twoHoursBefore.toDate(),
+        $lte: twoHoursAfter.toDate(),
       },
       process: {
         $in: [
@@ -105,11 +108,103 @@ export class InterviewBookingService {
     }
   }
 
+  private async updateProcessWithSession() {
+    const session = await this.interviewBookingModel.startSession();
+    session.startTransaction();
+    const pendingStatus = InterviewBookingProcessType.PENDING;
+    const nowDate = new Date();
+    const currentDate = moment.tz(nowDate, 'UTC');
+
+    try {
+      await this.interviewBookingModel.updateMany(
+        {
+          date: { $lt: currentDate.toDate() },
+          process: pendingStatus,
+        },
+        { $set: { process: InterviewBookingProcessType.CANCELLED } },
+        { session },
+      );
+
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  private async updateProcess() {
+    const pendingStatus = InterviewBookingProcessType.PENDING;
+    const nowDate = new Date();
+    const currentDate = moment.tz(nowDate, 'UTC');
+
+    try {
+      await this.interviewBookingModel.updateMany(
+        {
+          date: { $lt: currentDate.toDate() },
+          process: pendingStatus,
+        },
+        { $set: { process: InterviewBookingProcessType.CANCELLED } },
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async updateProcessMeWithSession(userId: string) {
+    const session = await this.interviewBookingModel.startSession();
+    session.startTransaction();
+    const pendingStatus = InterviewBookingProcessType.PENDING;
+    const nowDate = new Date();
+    const currentDate = moment.tz(nowDate, 'UTC');
+
+    try {
+      await this.interviewBookingModel.updateMany(
+        {
+          userId: userId,
+          date: { $lt: currentDate.toDate() },
+          process: pendingStatus,
+        },
+        { $set: { process: InterviewBookingProcessType.CANCELLED } },
+        { session },
+      );
+
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  private async updateProcessMe(userId: string) {
+    const pendingStatus = InterviewBookingProcessType.PENDING;
+    const nowDate = new Date();
+    const currentDate = moment.tz(nowDate, 'UTC');
+
+    try {
+      await this.interviewBookingModel.updateMany(
+        {
+          userId: userId,
+          date: { $lt: currentDate.toDate() },
+          process: pendingStatus,
+        },
+        { $set: { process: InterviewBookingProcessType.CANCELLED } },
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async findAll(query: Record<string, any>) {
     const { select, sort, page, limit } = query;
     ['select', 'sort', 'page', 'limit', 'search'].forEach(
       (el: string) => delete query[el],
     );
+
+    await this.updateProcess();
 
     const skip = (page - 1) * limit;
 
@@ -126,6 +221,7 @@ export class InterviewBookingService {
         select: 'userName firstName lastName email skills',
       })
       .exec();
+
     return { data: allBooking, pages: totalPages };
   }
 
@@ -147,89 +243,125 @@ export class InterviewBookingService {
     };
 
     const skip = (page - 1) * limit;
+    try {
+      await this.updateProcessMe(id);
 
-    const totalPolls = await this.interviewBookingModel.countDocuments(options);
-    const totalPages = Math.ceil(totalPolls / limit);
+      const totalPolls = await this.interviewBookingModel.countDocuments(
+        options,
+      );
+      const totalPages = Math.ceil(totalPolls / limit);
 
-    const booking = await this.interviewBookingModel
-      .find(options, select)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: 'userId',
-        select: 'userName firstName lastName email skills',
-      })
-      .exec();
-    return { data: booking, pages: totalPages };
+      const booking = await this.interviewBookingModel
+        .find(options, select)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path: 'userId',
+          select: 'userName firstName lastName email skills',
+        })
+        .exec();
+
+      // for (const mat of booking) {
+      //   if (mat.process === InterviewBookingProcessType.PENDING) {
+      //     const matches = await this.getSuggestThisMoment(
+      //       booking[0]._id,
+      //       id,
+      //       booking[0].date,
+      //     );
+      //     if (matches.points.length) {
+      //       const myMatched = matches.points[0]?.bestCore;
+      //       console.log('upa: ', myMatched);
+      //     }
+      //   }
+      // }
+      return { data: booking, pages: totalPages };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   async suggestMe(id: string, userId: string, time: string) {
     const baseMoment = moment.tz(time, 'UTC');
+    try {
+      const compareData = await this.interviewBookingModel
+        .findOne({
+          _id: id,
+          userId: userId,
+        })
+        .populate({ path: 'userId', select: 'userName skills experience' })
+        .lean();
 
-    const compareData = await this.interviewBookingModel
-      .findOne({
-        _id: id,
-        userId: userId,
-      })
-      .populate({ path: 'userId', select: 'userName skills experience' })
-      .lean();
+      if (!compareData) {
+        throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      }
 
-    if (!compareData)
-      throw new HttpException('not found', HttpStatus.NOT_FOUND);
-
-    const availableDates = await this.interviewBookingModel.aggregate([
-      {
-        $match: {
-          date: {
-            $gte: baseMoment.clone().startOf('day').toDate(),
-            $lt: baseMoment.clone().add(14, 'days').startOf('day').toDate(),
-          },
-          userId: { $ne: new ObjectId(userId) },
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user',
-        },
-      },
-      {
-        $unwind: '$user',
-      },
-      {
-        $project: {
-          userName: '$user.userName',
-          skills: '$user.skills',
-          experience: '$user.experience',
-          userId: 1,
-          date: 1,
-          time: 1,
-          process: 1,
-          skill_type: 1,
-          interview_type: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          __v: 1,
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: {
-              format: '%Y-%m-%d',
-              date: '$date',
+      const availableDates = await this.interviewBookingModel.aggregate([
+        {
+          $match: {
+            date: {
+              $gte: baseMoment.clone().startOf('day').toDate(),
+              $lt: baseMoment.clone().add(14, 'days').startOf('day').toDate(),
+            },
+            userId: { $ne: new ObjectId(userId) },
+            interview_type: { $ne: InterviewType.FRIEND },
+            process: {
+              $nin: [
+                InterviewBookingProcessType.MATCHED,
+                InterviewBookingProcessType.CANCELLED,
+                InterviewBookingProcessType.FAILED,
+              ],
             },
           },
-          data: { $push: '$$ROOT' },
         },
-      },
-    ]);
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user',
+          },
+        },
+        {
+          $unwind: '$user',
+        },
+        {
+          $project: {
+            userName: '$user.userName',
+            skills: '$user.skills',
+            experience: '$user.experience',
+            userId: 1,
+            date: 1,
+            time: 1,
+            process: 1,
+            skill_type: 1,
+            interview_type: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            __v: 1,
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$date',
+              },
+            },
+            data: { $push: '$$ROOT' },
+          },
+        },
+      ]);
 
-    const points = await this.calculateMatchScore(compareData, availableDates);
-    return { points };
+      const points = await this.calculateMatchScore(
+        compareData,
+        availableDates,
+      );
+      return { points };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   async getSuggestTimeByDay(id: string, userId: string, date: string) {
@@ -237,74 +369,170 @@ export class InterviewBookingService {
     const startOfDay = selectedDate.clone().startOf('day');
     const endOfDay = selectedDate.clone().endOf('day');
 
-    const compareData = await this.interviewBookingModel
-      .findOne({
-        _id: id,
-        userId: userId,
-      })
-      .populate({ path: 'userId', select: 'userName skills experience' })
-      .lean();
+    try {
+      const compareData = await this.interviewBookingModel
+        .findOne({
+          _id: id,
+          userId: userId,
+        })
+        .populate({ path: 'userId', select: 'userName skills experience' })
+        .lean();
 
-    if (!compareData)
-      throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      if (!compareData) {
+        throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      }
 
-    const datas = await this.interviewBookingModel.aggregate([
-      {
-        $match: {
-          userId: { $ne: new ObjectId(userId) },
-          date: {
-            $gte: startOfDay.toDate(),
-            $lte: endOfDay.toDate(),
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user',
-        },
-      },
-      {
-        $unwind: '$user',
-      },
-      {
-        $project: {
-          userName: '$user.userName',
-          skills: '$user.skills',
-          experience: '$user.experience',
-          userId: 1,
-          date: 1,
-          time: 1,
-          process: 1,
-          skill_type: 1,
-          interview_type: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          __v: 1,
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: {
-              format: '%H:%M:%S',
-              date: '$date',
+      const datas = await this.interviewBookingModel.aggregate([
+        {
+          $match: {
+            userId: { $ne: new ObjectId(userId) },
+            date: {
+              $gte: startOfDay.toDate(),
+              $lte: endOfDay.toDate(),
+            },
+            interview_type: { $ne: InterviewType.FRIEND },
+            process: {
+              $nin: [
+                InterviewBookingProcessType.MATCHED,
+                InterviewBookingProcessType.CANCELLED,
+                InterviewBookingProcessType.FAILED,
+              ],
             },
           },
-          data: { $push: '$$ROOT' },
         },
-      },
-      {
-        $sort: {
-          '_id.time': 1,
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user',
+          },
         },
-      },
-    ]);
+        {
+          $unwind: '$user',
+        },
+        {
+          $project: {
+            userName: '$user.userName',
+            skills: '$user.skills',
+            experience: '$user.experience',
+            userId: 1,
+            date: 1,
+            time: 1,
+            process: 1,
+            skill_type: 1,
+            interview_type: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            __v: 1,
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%H:%M:%S',
+                date: '$date',
+              },
+            },
+            data: { $push: '$$ROOT' },
+          },
+        },
+        {
+          $sort: {
+            '_id.time': 1,
+          },
+        },
+      ]);
 
-    const points = await this.calculateMatchScore(compareData, datas);
-    return { points };
+      const points = await this.calculateMatchScore(compareData, datas);
+      return { points };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async getSuggestThisMoment(id: string, userId: string, date: Date) {
+    const selectedDate = moment.tz(date, 'UTC');
+
+    try {
+      const compareData = await this.interviewBookingModel
+        .findOne({
+          _id: id,
+          userId: userId,
+        })
+        .populate({ path: 'userId', select: 'userName skills experience' })
+        .lean();
+
+      if (!compareData) {
+        throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      }
+
+      const datas = await this.interviewBookingModel.aggregate([
+        {
+          $match: {
+            userId: { $ne: new ObjectId(userId) },
+            date: selectedDate.toDate(),
+            interview_type: { $ne: InterviewType.FRIEND },
+            process: {
+              $nin: [
+                InterviewBookingProcessType.MATCHED,
+                InterviewBookingProcessType.CANCELLED,
+                InterviewBookingProcessType.FAILED,
+              ],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user',
+          },
+        },
+        {
+          $unwind: '$user',
+        },
+        {
+          $project: {
+            userName: '$user.userName',
+            skills: '$user.skills',
+            experience: '$user.experience',
+            userId: 1,
+            date: 1,
+            time: 1,
+            process: 1,
+            skill_type: 1,
+            interview_type: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            __v: 1,
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%Y-%m-%d %H:%M:%S',
+                date: '$date',
+              },
+            },
+            data: { $push: '$$ROOT' },
+          },
+        },
+        {
+          $sort: {
+            '_id.time': 1,
+          },
+        },
+      ]);
+
+      const points = await this.calculateMatchScore(compareData, datas);
+      return { points };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   async calculateMatchScore(compareData: InterviewBooking, data: any[]) {
@@ -346,7 +574,13 @@ export class InterviewBookingService {
         }
       }
 
-      arr.push({ _id: data[i]._id, maxPoint, date: maxData?.date });
+      arr.push({
+        _id: data[i]._id,
+        maxPoint,
+        date: maxData?.date,
+        bestId: maxData?.userId,
+        bestCore: maxData?._id,
+      });
       maxPoint = 0;
     }
 
@@ -359,6 +593,7 @@ export class InterviewBookingService {
     updateInterviewBookingDto: UpdateInterviewBookingDto,
   ) {
     const { date } = updateInterviewBookingDto;
+    delete updateInterviewBookingDto['userId'];
     try {
       const booking = await this.interviewBookingModel
         .findOne({
@@ -388,6 +623,11 @@ export class InterviewBookingService {
             booking.userId['time_zone'] || 'UTC',
           );
           booking.time = desiredHour;
+
+          if (!booking.connection_userId) {
+            booking.process = InterviewBookingProcessType.PENDING;
+          }
+
           const userHour = userDate.format('hh:mm A');
 
           await this.mailerService.sendMail({
@@ -417,7 +657,7 @@ export class InterviewBookingService {
     }
   }
 
-  async remove(userId, id: string) {
+  async remove(userId: string, id: string) {
     const delBooking = await this.interviewBookingModel.findOneAndDelete({
       _id: id,
       userId: userId,
