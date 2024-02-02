@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { InterviewBookingService } from './interview-booking.service';
 import {
@@ -40,15 +41,16 @@ export class InterviewBookingController {
   }
 
   @Get()
-  async findAll() {
-    return await this.interviewBookingService.findAll();
+  async findAll(@Query() query: Record<string, any>) {
+    return await this.interviewBookingService.findAll(query);
   }
+
   @ApiBearerAuth()
   @Get('list/me')
   @UseGuards(AuthGuard('jwt'))
-  async findMe(@Request() req) {
+  async findMe(@Request() req, @Query() query: Record<string, any>) {
     const userId = req.user._id;
-    return await this.interviewBookingService.findMe(userId);
+    return await this.interviewBookingService.findMe(userId, query);
   }
 
   @ApiBearerAuth()

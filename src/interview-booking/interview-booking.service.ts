@@ -105,15 +105,28 @@ export class InterviewBookingService {
     }
   }
 
-  async findAll() {
+  async findAll(query: Record<string, any>) {
+    const { select, sort, page, limit } = query;
+    ['select', 'sort', 'page', 'limit', 'search'].forEach(
+      (el: string) => delete query[el],
+    );
+
+    const skip = (page - 1) * limit;
+
+    const totalPolls = await this.interviewBookingModel.countDocuments(query);
+    const totalPages = Math.ceil(totalPolls / limit);
+
     const allBooking = await this.interviewBookingModel
-      .find({})
+      .find(query, select)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
       .populate({
         path: 'userId',
         select: 'userName firstName lastName email skills',
       })
       .exec();
-    return allBooking;
+    return { data: allBooking, pages: totalPages };
   }
 
   async findOne(id: string) {
@@ -122,15 +135,33 @@ export class InterviewBookingService {
     return booking;
   }
 
-  async findMe(id: string) {
+  async findMe(id: string, query: Record<string, any>) {
+    const { select, sort, page, limit } = query;
+    ['select', 'sort', 'page', 'limit', 'search', 'userId'].forEach(
+      (el: string) => delete query[el],
+    );
+
+    const options = {
+      userId: id,
+      ...query,
+    };
+
+    const skip = (page - 1) * limit;
+
+    const totalPolls = await this.interviewBookingModel.countDocuments(options);
+    const totalPages = Math.ceil(totalPolls / limit);
+
     const booking = await this.interviewBookingModel
-      .find({ userId: id })
+      .find(options, select)
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
       .populate({
         path: 'userId',
         select: 'userName firstName lastName email skills',
       })
       .exec();
-    return booking;
+    return { data: booking, pages: totalPages };
   }
 
   async suggestMe(id: string, userId: string, time: string) {
