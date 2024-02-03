@@ -8,10 +8,12 @@ import {
 } from '@/interview-booking/entities/interview-booking.entity';
 import { MailerService } from '@/mailer/mailer.service';
 import { UsersModule } from '@/users/users.module';
+import { MatchModule } from '@/match/match.module';
 
 @Module({
   imports: [
     UsersModule,
+    MatchModule,
     MongooseModule.forFeatureAsync([
       {
         name: InterviewBooking.name,

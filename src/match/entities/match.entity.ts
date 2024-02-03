@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { BaseData } from '@/shared';
-import { User } from '@/users/entities/user.entity';
 
 @Schema({ timestamps: true })
 export class Match extends BaseData {

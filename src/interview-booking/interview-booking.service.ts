@@ -17,6 +17,7 @@ import {
 import { MailerService } from '@/mailer/mailer.service';
 import { UsersService } from '@/users/users.service';
 import { BookingNotification, InviteFriend } from '@/mailer/templateFuc';
+import { MatchService } from '@/match/match.service';
 
 const { ObjectId } = Types;
 
@@ -27,6 +28,7 @@ export class InterviewBookingService {
     private readonly interviewBookingModel: Model<InterviewBooking>,
     private mailerService: MailerService,
     private usersService: UsersService,
+    private matchService: MatchService,
   ) {}
 
   async helpsToCheckDate(id: string, date: Date, userId: string) {
@@ -777,7 +779,10 @@ export class InterviewBookingService {
 
   async acceptedToBookingInvite(id: string, email: string) {
     try {
-      const booking = await this.interviewBookingModel.findById(id);
+      const booking = await this.interviewBookingModel
+        .findById(id)
+        .populate({ path: 'userId', select: 'email' })
+        .exec();
 
       if (!booking) {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
@@ -791,6 +796,18 @@ export class InterviewBookingService {
           'This email is not registered. Please register on this platform to accept the invitation.',
           HttpStatus.NOT_FOUND,
         );
+      }
+
+      const match = await this.matchService.create({
+        matchedUserOne: booking.userId,
+        matchedUserTwo: acceptingUser._id,
+        date: booking.date,
+        skill_type: booking.skill_type,
+        interview_type: booking.interview_type,
+      });
+
+      if (!match) {
+        throw new BadRequestException('Failed to accepted');
       }
 
       const inUserBooking = new this.interviewBookingModel({
@@ -807,6 +824,17 @@ export class InterviewBookingService {
 
       await inUserBooking.save();
       await booking.save();
+
+      const userDate = moment.tz(booking.date, 'UTC');
+      const userHour = userDate.format('hh:mm A');
+
+      await this.mailerService.sendMatchMail(
+        [booking.userId['email'], acceptingUser.email],
+        userDate.format('MMMM DD, YYYY'),
+        userHour,
+        `https://www.peerinterview.io/meet/${match._id}`,
+      );
+
       return inUserBooking;
     } catch (e) {
       throw new BadRequestException(

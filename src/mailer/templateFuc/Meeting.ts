@@ -1,9 +1,4 @@
-export const Meeting = (
-  userName: string,
-  date: string,
-  time: string,
-  link: string,
-) => {
+export const Meeting = (date: string, time: string, link: string) => {
   return `
       <table width="100%" border="0" cellspacing="0" cellpadding="0">
         <tr>
@@ -12,8 +7,7 @@ export const Meeting = (
               <tr>
                 <td>
                   <p style="font-size: 14px; line-height: 22px">
-                    Dear <b>${userName}</b> <br><br>
-                    I hope this email finds you well. We are excited to confirm your upcoming Peer-to-Peer Hard Skill Interview scheduled for ${date}. We appreciate your interest in showcasing your skills and talents with your peer/friend.
+                    Good news. Your interview booking has been matched.
                     <br><br>
                     <b>Interview Details:</b>
                     <ul>

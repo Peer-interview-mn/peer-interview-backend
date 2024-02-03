@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MailDto } from './dto/create-mailer.input';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { Meeting } from '@/mailer/templateFuc';
 
 @Injectable()
 export class MailerService {
@@ -43,12 +44,17 @@ export class MailerService {
     }
   }
 
-  async sendMatchMail(email: string) {
+  async sendMatchMail(
+    email: string[],
+    date: string,
+    time: string,
+    link: string,
+  ) {
     await this.sendMail({
       toMail: email,
       subject: `Match and Details for meeting`,
       text: 'You have been matched meeting.',
-      html: null,
+      html: Meeting(date, time, link),
     });
   }
 }
