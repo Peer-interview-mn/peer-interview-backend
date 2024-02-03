@@ -1,4 +1,4 @@
-export const BookingNotification = (
+export const Meeting = (
   userName: string,
   date: string,
   time: string,

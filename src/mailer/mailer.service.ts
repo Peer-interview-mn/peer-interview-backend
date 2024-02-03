@@ -42,4 +42,13 @@ export class MailerService {
       transport.close();
     }
   }
+
+  async sendMatchMail(email: string) {
+    await this.sendMail({
+      toMail: email,
+      subject: `Match and Details for meeting`,
+      text: 'You have been matched meeting.',
+      html: null,
+    });
+  }
 }

@@ -15,9 +15,8 @@ import {
   InterviewType,
 } from '@/interview-booking/enums/index.enum';
 import { MailerService } from '@/mailer/mailer.service';
-import { InviteFriend } from '@/mailer/templateFuc/InviteFriend';
 import { UsersService } from '@/users/users.service';
-import { BookingNotification } from '@/mailer/templateFuc/BookingNoft';
+import { BookingNotification, InviteFriend } from '@/mailer/templateFuc';
 
 const { ObjectId } = Types;
 
@@ -685,8 +684,8 @@ export class InterviewBookingService {
       }
       if (booking.invite_users.includes(email)) {
         throw new HttpException(
-          'This mail already invited',
-          HttpStatus.BAD_GATEWAY,
+          'This email is already invited',
+          HttpStatus.BAD_REQUEST,
         );
       }
 
@@ -711,6 +710,47 @@ export class InterviewBookingService {
     }
   }
 
+  private async checkInviteConditions(
+    booking: InterviewBooking,
+    email: string,
+  ) {
+    const currentDate = moment().tz('UTC');
+    const minAllowedDate = currentDate.clone().add(10, 'minutes');
+    const providedDate = moment(booking.date).tz('UTC');
+
+    if (providedDate.isBefore(minAllowedDate)) {
+      throw new HttpException(
+        'You must receive this invitation at least 10 minutes in advance!',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (booking.invite_url.includes(email)) {
+      throw new HttpException(
+        'Oops!. You are not invited',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (
+      booking.connection_userId ||
+      booking.process === InterviewBookingProcessType.MATCHED
+    ) {
+      throw new HttpException(
+        'Oops!. This booking has already been matched',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (
+      booking.process === InterviewBookingProcessType.CANCELLED ||
+      booking.process === InterviewBookingProcessType.FAILED
+    ) {
+      throw new HttpException(
+        'Oops!. This booking has timeout',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   async checkUrl(id: string, email: string) {
     try {
       const booking = await this.interviewBookingModel.findById(id);
@@ -718,21 +758,8 @@ export class InterviewBookingService {
       if (!booking) {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
-      if (booking.invite_url.includes(email)) {
-        throw new HttpException(
-          'Oops!. You are not invited',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      if (
-        booking.connection_userId ||
-        booking.process === InterviewBookingProcessType.MATCHED
-      ) {
-        throw new HttpException(
-          'Oops!. This booking bas already been matched',
-          HttpStatus.NOT_FOUND,
-        );
-      }
+
+      await this.checkInviteConditions(booking, email);
 
       const user = this.usersService.findOne(email);
       if (!user) {
@@ -756,22 +783,7 @@ export class InterviewBookingService {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
 
-      if (booking.invite_url.includes(email)) {
-        throw new HttpException(
-          'Oops!. You are not invited',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      if (
-        booking.connection_userId ||
-        booking.process === InterviewBookingProcessType.MATCHED
-      ) {
-        throw new HttpException(
-          'Oops!. This booking bas already been matched',
-          HttpStatus.NOT_FOUND,
-        );
-      }
+      await this.checkInviteConditions(booking, email);
 
       const acceptingUser = await this.usersService.findOne(email);
       if (!acceptingUser) {
@@ -781,10 +793,21 @@ export class InterviewBookingService {
         );
       }
 
+      const inUserBooking = new this.interviewBookingModel({
+        userId: acceptingUser._id,
+        process: InterviewBookingProcessType.MATCHED,
+        connection_userId: booking.userId,
+        skill_type: booking.skill_type,
+        interview_type: booking.interview_type,
+        date: booking.date,
+      });
+
       booking.connection_userId = acceptingUser._id;
       booking.process = InterviewBookingProcessType.MATCHED;
+
+      await inUserBooking.save();
       await booking.save();
-      return booking;
+      return inUserBooking;
     } catch (e) {
       throw new BadRequestException(
         `Error accepting booking invite: ${e.message}`,
