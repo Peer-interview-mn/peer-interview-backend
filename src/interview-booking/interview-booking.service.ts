@@ -683,6 +683,12 @@ export class InterviewBookingService {
           HttpStatus.BAD_GATEWAY,
         );
       }
+      if (booking.invite_users.includes(email)) {
+        throw new HttpException(
+          'This mail already invited',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
 
       const invitationLink = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
       const emailSent = await this.mailerService.sendMail({
