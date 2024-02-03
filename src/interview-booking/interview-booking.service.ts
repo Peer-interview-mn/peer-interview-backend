@@ -677,7 +677,7 @@ export class InterviewBookingService {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
 
-      if (booking.invite_url.length > 5) {
+      if (booking.invite_users.length > 5) {
         throw new HttpException(
           'Friend invite limit reached',
           HttpStatus.BAD_GATEWAY,
