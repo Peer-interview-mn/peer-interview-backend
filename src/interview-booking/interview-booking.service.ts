@@ -832,7 +832,7 @@ export class InterviewBookingService {
         [booking.userId['email'], acceptingUser.email],
         userDate.format('MMMM DD, YYYY'),
         userHour,
-        `https://www.peerinterview.io/meet/${match._id}`,
+        `https://www.peerinterview.io/app/meet/${match._id}`,
       );
 
       return inUserBooking;

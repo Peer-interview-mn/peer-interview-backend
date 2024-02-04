@@ -12,7 +12,7 @@ export const Meeting = (date: string, time: string, link: string) => {
                     <b>Interview Details:</b>
                     <ul>
                         <li>Date: ${date}<br></li>
-                        <li>Time: ${time}<br></li>
+                        <li>Time: ${time} UTC<br></li>
                         <li>Location: ${link}<br></li>
                     </ul>
                     <b>How to Join</b>: To join the interview, please click on the following link: ${link}. Please make sure to be available at the designated location on time.
