@@ -271,19 +271,6 @@ export class InterviewBookingService {
         })
         .exec();
 
-      // for (const mat of booking) {
-      //   if (mat.process === InterviewBookingProcessType.PENDING) {
-      //     const matches = await this.getSuggestThisMoment(
-      //       booking[0]._id,
-      //       id,
-      //       booking[0].date,
-      //     );
-      //     if (matches.points.length) {
-      //       const myMatched = matches.points[0]?.bestCore;
-      //       console.log('upa: ', myMatched);
-      //     }
-      //   }
-      // }
       return { data: booking, pages: totalPages };
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -605,66 +592,135 @@ export class InterviewBookingService {
     delete updateInterviewBookingDto['userId'];
     try {
       const booking = await this.interviewBookingModel
-        .findOne({
-          _id: id,
-          userId: userId,
-        })
+        .findOneAndUpdate(
+          {
+            _id: id,
+            userId: userId,
+            process: { $in: [InterviewBookingProcessType.PENDING] },
+          },
+          { ...updateInterviewBookingDto },
+          { new: true },
+        )
         .populate({ path: 'userId', select: 'email userName time_zone' })
         .exec();
 
-      if (!booking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
-      if (
-        booking.process === InterviewBookingProcessType.MATCHED ||
-        booking.process === InterviewBookingProcessType.FAILED
-      ) {
-        throw new HttpException(
-          'This interview booking cannot be changed',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      if (updateInterviewBookingDto.date) {
-        const cond = await this.helpsToCheckDate(id, date, userId);
-        if (cond) {
-          const baseMoment = moment.tz(date, 'UTC');
-          const desiredHour = baseMoment.get('hour');
-          const userDate = moment.tz(
-            date,
-            booking.userId['time_zone'] || 'UTC',
+      if (!booking) {
+        {
+          throw new HttpException(
+            'This interview booking cannot be changed',
+            HttpStatus.BAD_REQUEST,
           );
-          booking.time = desiredHour;
-
-          if (!booking.connection_userId) {
-            booking.process = InterviewBookingProcessType.PENDING;
-          }
-
-          const userHour = userDate.format('hh:mm A');
-
-          await this.mailerService.sendMail({
-            toMail: booking.userId['email'],
-            subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
-            text: 'You have been booked meeting.',
-            html: BookingNotification(
-              booking.userId['userName'],
-              userDate.format('MMMM DD, YYYY'),
-              userHour,
-              'https://www.peerinterview.io/app',
-            ),
-          });
         }
       }
 
-      Object.assign(booking, updateInterviewBookingDto);
+      if (date) {
+        await this.helpsToCheckDate(id, date, userId);
+        const desiredHour = moment.tz(date, 'UTC').get('hour');
+        const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
+        booking.time = desiredHour;
+
+        if (!booking.connection_userId) {
+          booking.process = InterviewBookingProcessType.PENDING;
+        }
+
+        const userHour = userDate.format('hh:mm A');
+
+        await this.mailerService.sendMail({
+          toMail: booking.userId['email'],
+          subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
+          text: 'You have been booked meeting.',
+          html: BookingNotification(
+            booking.userId['userName'],
+            userDate.format('MMMM DD, YYYY'),
+            userHour,
+            'https://www.peerinterview.io/app',
+          ),
+        });
+      }
 
       if (!booking.invite_url) {
         booking.invite_url = `https://peerinterview.io/app/invite-to-meeting/${id}`;
       }
 
       await booking.save();
+
+      const thisMomentMatch = await this.getSuggestThisMoment(
+        id,
+        userId,
+        booking.date,
+      );
+      if (thisMomentMatch.points.length) {
+        const myBestMoment = thisMomentMatch.points[0]?.bestCore;
+        const myBestMomentUser = thisMomentMatch.points[0]?.bestId;
+
+        const match = await this.matchService.create({
+          matchedUserOne: booking.userId,
+          matchedUserTwo: myBestMomentUser,
+          date: booking.date,
+          skill_type: booking.skill_type,
+          interview_type: booking.interview_type,
+        });
+        if (match) {
+          booking.connection_userId = myBestMomentUser;
+          booking.process = InterviewBookingProcessType.MATCHED;
+          await this.userMatchedAndSendMail(
+            myBestMoment,
+            myBestMomentUser,
+            userId,
+            match._id,
+          );
+
+          const userDate = moment.tz(
+            date,
+            booking.userId['time_zone'] || 'UTC',
+          );
+          const userHour = userDate.format('hh:mm A');
+          await this.mailerService.sendMatchMail(
+            booking.userId['email'],
+            userDate.format('MMMM DD, YYYY'),
+            userHour,
+            `https://www.peerinterview.io/app/meet/${match._id}`,
+          );
+        }
+      }
+      await booking.save();
       return booking;
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  async userMatchedAndSendMail(
+    id: string,
+    userId: string,
+    conUser: string,
+    matchId: string,
+  ) {
+    const booking = await this.interviewBookingModel
+      .findOneAndUpdate(
+        { _id: id, userId: userId },
+        {
+          process: InterviewBookingProcessType.MATCHED,
+          connection_userId: conUser,
+        },
+        { new: true },
+      )
+      .populate({ path: 'userId', select: 'email' })
+      .exec();
+
+    const userDate = moment.tz(
+      booking.date,
+      booking.userId['time_zone'] || 'UTC',
+    );
+    const userHour = userDate.format('hh:mm A');
+    await this.mailerService.sendMatchMail(
+      booking.userId['email'],
+      userDate.format('MMMM DD, YYYY'),
+      userHour,
+      `https://www.peerinterview.io/app/meet/${matchId}`,
+    );
+
+    return booking;
   }
 
   async remove(userId: string, id: string) {
