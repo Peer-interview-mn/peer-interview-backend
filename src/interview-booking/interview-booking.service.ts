@@ -221,6 +221,10 @@ export class InterviewBookingService {
         path: 'userId',
         select: 'userName firstName lastName email skills',
       })
+      .populate({
+        path: 'connection_userId',
+        select: 'userName firstName lastName email skills',
+      })
       .exec();
 
     return { data: allBooking, pages: totalPages };
@@ -259,6 +263,10 @@ export class InterviewBookingService {
         .limit(limit)
         .populate({
           path: 'userId',
+          select: 'userName firstName lastName email skills',
+        })
+        .populate({
+          path: 'connection_userId',
           select: 'userName firstName lastName email skills',
         })
         .exec();
