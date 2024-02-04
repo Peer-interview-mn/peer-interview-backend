@@ -648,7 +648,7 @@ export class InterviewBookingService {
       Object.assign(booking, updateInterviewBookingDto);
 
       if (!booking.invite_url) {
-        booking.invite_url = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
+        booking.invite_url = `https://peerinterview.io/app/invite-to-meeting/${id}`;
       }
 
       await booking.save();
@@ -691,7 +691,7 @@ export class InterviewBookingService {
         );
       }
 
-      const invitationLink = `https://peerinterview.io/invite-to-meeting/?inviteId=${id}`;
+      const invitationLink = `https://peerinterview.io/app/invite-to-meeting/${id}`;
       const emailSent = await this.mailerService.sendMail({
         toMail: email,
         subject: 'Invitation to Friend to Friend Interview',

@@ -3,7 +3,6 @@ import { CreateMatchDto } from './dto/create-match.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Match } from '@/match/entities/match.entity';
 import { Model } from 'mongoose';
-import { MailerService } from '@/mailer/mailer.service';
 
 @Injectable()
 export class MatchService {
