@@ -608,11 +608,12 @@ export class InterviewBookingService {
       if (
         booking.process === InterviewBookingProcessType.MATCHED ||
         booking.process === InterviewBookingProcessType.FAILED
-      )
+      ) {
         throw new HttpException(
           'This interview booking cannot be changed',
           HttpStatus.BAD_REQUEST,
         );
+      }
 
       if (updateInterviewBookingDto.date) {
         const cond = await this.helpsToCheckDate(id, date, userId);
@@ -659,12 +660,23 @@ export class InterviewBookingService {
   }
 
   async remove(userId: string, id: string) {
-    const delBooking = await this.interviewBookingModel.findOneAndDelete({
+    const booking = await this.interviewBookingModel.findOne({
       _id: id,
       userId: userId,
     });
-    if (!delBooking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
-    return delBooking;
+    if (!booking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+
+    if (booking.process === InterviewBookingProcessType.MATCHED) {
+      throw new HttpException(
+        'This interview booking cannot be changed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return await this.interviewBookingModel.findOneAndDelete({
+      _id: id,
+      userId: userId,
+    });
   }
 
   async inviteToBooking(id: string, userId: string, email: string) {

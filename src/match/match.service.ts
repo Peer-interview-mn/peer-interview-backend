@@ -39,10 +39,14 @@ export class MatchService {
   }
 
   async findOne(id: string, userId: string) {
-    const match = await this.matchModel.findOne({
-      _id: id,
-      $or: [{ matchedUserOne: userId }, { matchedUserTwo: userId }],
-    });
+    const match = await this.matchModel
+      .findOne({
+        _id: id,
+        $or: [{ matchedUserOne: userId }, { matchedUserTwo: userId }],
+      })
+      .populate({ path: 'matchedUserOne' })
+      .populate({ path: 'matchedUserTwo' })
+      .exec();
 
     if (!match) {
       throw new HttpException('not found', HttpStatus.NOT_FOUND);
