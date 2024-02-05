@@ -670,16 +670,12 @@ export class InterviewBookingService {
             match._id,
           );
 
-          const userDate = moment.tz(
-            date,
-            booking.userId['time_zone'] || 'UTC',
-          );
-          const userHour = userDate.format('hh:mm A');
           await this.mailerService.sendMatchMail(
-            booking.userId['email'],
-            userDate.format('MMMM DD, YYYY'),
-            userHour,
+            [booking.userId['email']],
+            [booking.userId['userName']],
+            date,
             `https://www.peerinterview.io/app/meet/${match._id}`,
+            [booking.userId['time_zone']],
           );
         }
       }
@@ -708,16 +704,12 @@ export class InterviewBookingService {
       .populate({ path: 'userId', select: 'email' })
       .exec();
 
-    const userDate = moment.tz(
-      booking.date,
-      booking.userId['time_zone'] || 'UTC',
-    );
-    const userHour = userDate.format('hh:mm A');
     await this.mailerService.sendMatchMail(
-      booking.userId['email'],
-      userDate.format('MMMM DD, YYYY'),
-      userHour,
+      [booking.userId['email']],
+      [booking.userId['userName']],
+      booking.date,
       `https://www.peerinterview.io/app/meet/${matchId}`,
+      [booking.userId['time_zone']],
     );
 
     return booking;
@@ -857,7 +849,7 @@ export class InterviewBookingService {
     try {
       const booking = await this.interviewBookingModel
         .findById(id)
-        .populate({ path: 'userId', select: 'email' })
+        .populate({ path: 'userId', select: 'email time_zone userName' })
         .exec();
 
       if (!booking) {
@@ -901,14 +893,30 @@ export class InterviewBookingService {
       await inUserBooking.save();
       await booking.save();
 
-      const userDate = moment.tz(booking.date, 'UTC');
-      const userHour = userDate.format('hh:mm A');
+      console.log('ac: ', acceptingUser, '\n dahudhas: ', booking);
+      console.log(
+        'ac: ',
+        booking.userId['time_zone'],
+        '\n dahudhas: ',
+        acceptingUser.time_zone,
+      );
 
       await this.mailerService.sendMatchMail(
         [booking.userId['email'], acceptingUser.email],
-        userDate.format('MMMM DD, YYYY'),
-        userHour,
+        [booking.userId['userName'], acceptingUser.userName],
+        booking.date,
         `https://www.peerinterview.io/app/meet/${match._id}`,
+        [booking.userId['time_zone'], acceptingUser.time_zone],
+      );
+
+      const sendUnlucky = booking.invite_users.filter(
+        (user) => user !== acceptingUser.email,
+      );
+
+      await this.mailerService.unLuckyMail(
+        sendUnlucky,
+        booking.userId['userName'],
+        'https://www.peerinterview.io/app',
       );
 
       return inUserBooking;

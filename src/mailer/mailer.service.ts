@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { MailDto } from './dto/create-mailer.input';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { Meeting } from '@/mailer/templateFuc';
+import { MailForUnluckyOrSlow, Meeting } from '@/mailer/templateFuc';
+import * as moment from 'moment-timezone';
 
 @Injectable()
 export class MailerService {
@@ -46,15 +47,36 @@ export class MailerService {
 
   async sendMatchMail(
     email: string[],
-    date: string,
-    time: string,
+    userName: string[],
+    date: Date,
     link: string,
+    timeZone: string[],
   ) {
+    for (let i = 0; i < email.length; i++) {
+      const userDate = moment.tz(date, timeZone[i] || 'UTC');
+      const userHour = userDate.format('hh:mm A');
+      const forDate = userDate.format('MMMM DD, YYYY');
+
+      await this.sendMail({
+        toMail: email,
+        subject: `Exciting News - Confirmation and Details for Peer-to-Peer Hard Skill/Soft Skill Interview on ${forDate}`,
+        text: 'You have been matched meeting.',
+        html: Meeting(
+          userName[i],
+          userDate.format('MMMM DD, YYYY'),
+          userHour,
+          link,
+        ),
+      });
+    }
+  }
+
+  async unLuckyMail(email: string[], friendName: string, link: string) {
     await this.sendMail({
       toMail: email,
-      subject: `Match and Details for meeting`,
-      text: 'You have been matched meeting.',
-      html: Meeting(date, time, link),
+      subject: `Future Opportunity: Peer-to-Peer Hard Skill/Soft Skill Interview`,
+      text: 'You have been unlucky',
+      html: MailForUnluckyOrSlow(friendName, link),
     });
   }
 }
