@@ -129,11 +129,21 @@ export class UsersService {
   }
 
   async checkFields(id: string) {
-    const requiredFields = ['experience', 'skills', 'role', 'country'];
+    const requiredFields = [
+      'experience',
+      'skills',
+      'role',
+      'country',
+      'interview_skill',
+    ];
     const user = await this.userModel.findById(id);
     if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
     for (const field of requiredFields) {
-      if (!user[field]) {
+      if (
+        !user[field] ||
+        !user['skills'].length ||
+        !user['interview_skill'].length
+      ) {
         return false;
       }
     }

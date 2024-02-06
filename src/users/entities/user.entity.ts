@@ -83,18 +83,6 @@ export class User extends BaseData {
   @Prop({ default: false })
   verifyAccount: boolean;
 
-  // @Prop()
-  // account_verify_code: string;
-  //
-  // @Prop()
-  // avc_expire: Date;
-
-  // @Prop()
-  // resetPasswordToken: string;
-  //
-  // @Prop()
-  // resetPasswordExpire: Date;
-
   @Prop({ default: null })
   website: string;
 
@@ -107,21 +95,6 @@ export class User extends BaseData {
   async comparePassword(enteredPassword: string): Promise<boolean> {
     return bcrypt.compareSync(enteredPassword, this.password);
   }
-
-  // async generatePasswordChangeToken(): Promise<string> {
-  //   const code = generateVerifyCode();
-  //
-  //   // const resetToken = crypto.randomBytes(20).toString('hex');
-  //   //
-  //   // this.resetPasswordToken = crypto
-  //   //   .createHash('sha256')
-  //   //   .update(resetToken)
-  //   //   .digest('hex');
-  //
-  //   this.resetPasswordToken = code.code;
-  //   this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
-  //   return code.code;
-  // }
 }
 export const UserSchema = SchemaFactory.createForClass(User);
 
