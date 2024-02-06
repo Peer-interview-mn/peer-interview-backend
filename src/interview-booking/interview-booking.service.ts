@@ -8,7 +8,7 @@ import { CreateInterviewBookingDto } from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { InterviewBooking } from '@/interview-booking/entities/interview-booking.entity';
-import { Model, Types } from 'mongoose';
+import { Model, Types, ClientSession } from 'mongoose';
 import * as moment from 'moment-timezone';
 import {
   InterviewBookingProcessType,
@@ -85,6 +85,7 @@ export class InterviewBookingService {
   async create(
     userId: string,
     createInterviewBookingDto: CreateInterviewBookingDto,
+    session: ClientSession,
   ) {
     try {
       const foundBooking = await this.interviewBookingModel.findOne({
@@ -99,63 +100,19 @@ export class InterviewBookingService {
         });
 
         newBooking.invite_url = `https://peerinterview.io/app/invite-to-meeting/${newBooking._id}`;
-        await newBooking.save();
+        await newBooking.save({ session });
         return newBooking;
       }
 
       Object.assign(foundBooking, createInterviewBookingDto);
-      await foundBooking.save();
+      await foundBooking.save({ session });
       return foundBooking;
     } catch (e) {
       throw new BadRequestException(e.message);
     }
   }
 
-  private async updateProcessWithSession() {
-    const session = await this.interviewBookingModel.startSession();
-    session.startTransaction();
-    const pendingStatus = InterviewBookingProcessType.PENDING;
-    const nowDate = new Date();
-    const currentDate = moment.tz(nowDate, 'UTC');
-
-    try {
-      await this.interviewBookingModel.updateMany(
-        {
-          date: { $lt: currentDate.toDate() },
-          process: pendingStatus,
-        },
-        { $set: { process: InterviewBookingProcessType.CANCELLED } },
-        { session },
-      );
-
-      await session.commitTransaction();
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      await session.endSession();
-    }
-  }
-
   private async updateProcess() {
-    const pendingStatus = InterviewBookingProcessType.PENDING;
-    const nowDate = new Date();
-    const currentDate = moment.tz(nowDate, 'UTC');
-
-    try {
-      await this.interviewBookingModel.updateMany(
-        {
-          date: { $lt: currentDate.toDate() },
-          process: pendingStatus,
-        },
-        { $set: { process: InterviewBookingProcessType.CANCELLED } },
-      );
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  private async updateProcessMeWithSession(userId: string) {
     const session = await this.interviewBookingModel.startSession();
     session.startTransaction();
     const pendingStatus = InterviewBookingProcessType.PENDING;
@@ -165,7 +122,6 @@ export class InterviewBookingService {
     try {
       await this.interviewBookingModel.updateMany(
         {
-          userId: userId,
           date: { $lt: currentDate.toDate() },
           process: pendingStatus,
         },
@@ -183,6 +139,8 @@ export class InterviewBookingService {
   }
 
   private async updateProcessMe(userId: string) {
+    const session = await this.interviewBookingModel.startSession();
+    session.startTransaction();
     const pendingStatus = InterviewBookingProcessType.PENDING;
     const nowDate = new Date();
     const currentDate = moment.tz(nowDate, 'UTC');
@@ -195,9 +153,15 @@ export class InterviewBookingService {
           process: pendingStatus,
         },
         { $set: { process: InterviewBookingProcessType.CANCELLED } },
+        { session },
       );
+
+      await session.commitTransaction();
     } catch (error) {
+      await session.abortTransaction();
       throw error;
+    } finally {
+      await session.endSession();
     }
   }
 
@@ -885,6 +849,7 @@ export class InterviewBookingService {
         skill_type: booking.skill_type,
         interview_type: booking.interview_type,
         date: booking.date,
+        time: booking.time,
       });
 
       booking.connection_userId = acceptingUser._id;
