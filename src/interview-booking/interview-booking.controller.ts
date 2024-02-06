@@ -18,6 +18,9 @@ import {
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+// import { ClientSession } from 'mongoose';
+// import { MongoSessionInterceptor } from '@/common/interceptors/mongo-session.interceptor';
+// import { MongoSession } from '@/common/decorators/mongo-session.decorator';
 
 @ApiTags('interview-booking')
 @Controller('interview-booking')
@@ -28,10 +31,12 @@ export class InterviewBookingController {
 
   @ApiBearerAuth()
   @Post()
+  // @UseInterceptors(MongoSessionInterceptor)
   @UseGuards(AuthGuard('jwt'))
   async create(
     @Request() req,
     @Body() createInterviewBookingDto: CreateInterviewBookingDto,
+    // @MongoSession() session: ClientSession,
   ) {
     const userId = req.user._id;
     return await this.interviewBookingService.create(

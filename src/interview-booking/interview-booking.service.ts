@@ -51,11 +51,12 @@ export class InterviewBookingService {
       },
     });
 
-    if (beforeHave.length)
+    if (beforeHave.length) {
       throw new HttpException(
         'You may have already filled this time or you may be interviewing',
         HttpStatus.BAD_REQUEST,
       );
+    }
 
     const currentDate = moment().tz('UTC');
     const minAllowedDate = currentDate.clone().add(2, 'hours');
@@ -97,6 +98,7 @@ export class InterviewBookingService {
           ...createInterviewBookingDto,
         });
 
+        newBooking.invite_url = `https://peerinterview.io/app/invite-to-meeting/${newBooking._id}`;
         await newBooking.save();
         return newBooking;
       }
@@ -590,6 +592,7 @@ export class InterviewBookingService {
   ) {
     const { date } = updateInterviewBookingDto;
     delete updateInterviewBookingDto['userId'];
+    delete updateInterviewBookingDto['date'];
     try {
       const booking = await this.interviewBookingModel
         .findOneAndUpdate(
@@ -615,8 +618,10 @@ export class InterviewBookingService {
 
       if (date) {
         await this.helpsToCheckDate(id, date, userId);
+
         const desiredHour = moment.tz(date, 'UTC').get('hour');
         const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
+        booking.date = date;
         booking.time = desiredHour;
 
         if (!booking.connection_userId) {
@@ -638,17 +643,12 @@ export class InterviewBookingService {
         });
       }
 
-      if (!booking.invite_url) {
-        booking.invite_url = `https://peerinterview.io/app/invite-to-meeting/${id}`;
-      }
-
-      await booking.save();
-
       const thisMomentMatch = await this.getSuggestThisMoment(
         id,
         userId,
         booking.date,
       );
+
       if (thisMomentMatch.points.length) {
         const myBestMoment = thisMomentMatch.points[0]?.bestCore;
         const myBestMomentUser = thisMomentMatch.points[0]?.bestId;
@@ -892,14 +892,6 @@ export class InterviewBookingService {
 
       await inUserBooking.save();
       await booking.save();
-
-      console.log('ac: ', acceptingUser, '\n dahudhas: ', booking);
-      console.log(
-        'ac: ',
-        booking.userId['time_zone'],
-        '\n dahudhas: ',
-        acceptingUser.time_zone,
-      );
 
       await this.mailerService.sendMatchMail(
         [booking.userId['email'], acceptingUser.email],
