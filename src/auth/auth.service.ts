@@ -54,7 +54,11 @@ export class AuthService {
           }
           const accessToken = await this.generateJwtToken(myUser);
           const refreshToken = await this.generateRefToken(myUser);
-          return { access_token: accessToken, refresh_token: refreshToken };
+          return {
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            user: myUser,
+          };
         }
 
         const createUser: GoogleUserInput = {
@@ -69,7 +73,11 @@ export class AuthService {
         const newUser = await this.googleUser(createUser);
         const accessToken = await this.generateJwtToken(newUser);
         const refreshToken = await this.generateRefToken(newUser);
-        return { access_token: accessToken, refresh_token: refreshToken };
+        return {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          user: newUser,
+        };
       }
 
       throw new BadRequestException(
