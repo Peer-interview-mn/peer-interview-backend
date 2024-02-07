@@ -4,3 +4,4 @@ export * from './BookingNoft';
 export * from './InviteFriend';
 export * from './Meeting';
 export * from './MailForUnluckyOrSlow';
+export * from './Cancelled';

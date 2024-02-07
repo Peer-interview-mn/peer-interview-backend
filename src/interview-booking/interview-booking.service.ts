@@ -627,6 +627,7 @@ export class InterviewBookingService {
         if (match) {
           booking.connection_userId = myBestMomentUser;
           booking.process = InterviewBookingProcessType.MATCHED;
+          booking.meetId = match._id;
           await this.userMatchedAndSendMail(
             myBestMoment,
             myBestMomentUser,
@@ -662,6 +663,7 @@ export class InterviewBookingService {
         {
           process: InterviewBookingProcessType.MATCHED,
           connection_userId: conUser,
+          meetId: matchId,
         },
         { new: true },
       )
@@ -850,9 +852,11 @@ export class InterviewBookingService {
         interview_type: booking.interview_type,
         date: booking.date,
         time: booking.time,
+        meetId: match._id,
       });
 
       booking.connection_userId = acceptingUser._id;
+      booking.meetId = match._id;
       booking.process = InterviewBookingProcessType.MATCHED;
 
       await inUserBooking.save();

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MailDto } from './dto/create-mailer.input';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { MailForUnluckyOrSlow, Meeting } from '@/mailer/templateFuc';
+import { Cancelled, MailForUnluckyOrSlow, Meeting } from '@/mailer/templateFuc';
 import * as moment from 'moment-timezone';
 
 @Injectable()
@@ -77,6 +77,24 @@ export class MailerService {
       subject: `Future Opportunity: Peer-to-Peer Hard Skill/Soft Skill Interview`,
       text: 'You have been unlucky',
       html: MailForUnluckyOrSlow(friendName, link),
+    });
+  }
+
+  async matchCanceledMail(
+    email: string,
+    userName: string,
+    date: Date,
+    timeZone: string,
+  ) {
+    const userDate = moment.tz(date, timeZone || 'UTC');
+    const userHour = userDate.format('hh:mm A');
+    const forDate = userDate.format('MMMM DD, YYYY');
+
+    await this.sendMail({
+      toMail: email,
+      subject: `Details of canceled interview`,
+      text: 'You have been unlucky',
+      html: Cancelled(userName, forDate, userHour),
     });
   }
 }

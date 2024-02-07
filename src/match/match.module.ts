@@ -3,6 +3,11 @@ import { MatchService } from './match.service';
 import { MatchController } from './match.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Match, MatchSchema } from '@/match/entities/match.entity';
+import {
+  InterviewBooking,
+  InterviewBookingSchema,
+} from '@/interview-booking/entities/interview-booking.entity';
+import { MailerModule } from '@/mailer/mailer.module';
 
 @Module({
   imports: [
@@ -13,7 +18,15 @@ import { Match, MatchSchema } from '@/match/entities/match.entity';
           return MatchSchema;
         },
       },
+      {
+        name: InterviewBooking.name,
+        useFactory: () => {
+          const schema = InterviewBookingSchema;
+          return schema;
+        },
+      },
     ]),
+    MailerModule,
   ],
   controllers: [MatchController],
   providers: [MatchService],

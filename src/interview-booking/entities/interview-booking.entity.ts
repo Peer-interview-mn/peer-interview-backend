@@ -38,6 +38,9 @@ export class InterviewBooking extends BaseData {
 
   @Prop({ type: Number })
   time: number;
+
+  @Prop({ type: 'ObjectId', ref: 'Match', default: null })
+  meetId: string;
 }
 
 export const InterviewBookingSchema =
