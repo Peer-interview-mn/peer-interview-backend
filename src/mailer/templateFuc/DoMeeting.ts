@@ -1,6 +1,7 @@
-export const Meeting = (
+export const DoMeeting = (
   userName: string,
-  friendName: string,
+  matchUser: string,
+  type: string,
   date: string,
   time: string,
   link: string,
@@ -8,7 +9,7 @@ export const Meeting = (
   return `
     <div>
         Dear <b>${userName}</b> <br><br>
-        Your friend ${friendName} accepted your invitation of  the Peer-to-Friend Hard Skill Interview on ${date}, has made our upcoming session even more promising.
+        You have matched to meet ${matchUser}. The Peer-to-${type} Hard Skill Interview on ${date} is scheduled, making our upcoming session even more promising.
         <br><br>
         <b>Here are the interview details:</b>
         <ul>

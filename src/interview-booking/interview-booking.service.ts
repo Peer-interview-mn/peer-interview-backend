@@ -542,6 +542,7 @@ export class InterviewBookingService {
         date: maxData?.date,
         bestId: maxData?.userId,
         bestCore: maxData?._id,
+        bestName: maxData?.userName,
       });
       maxPoint = 0;
     }
@@ -616,6 +617,7 @@ export class InterviewBookingService {
       if (thisMomentMatch.points.length) {
         const myBestMoment = thisMomentMatch.points[0]?.bestCore;
         const myBestMomentUser = thisMomentMatch.points[0]?.bestId;
+        const myBestMomentUserName = thisMomentMatch.points[0]?.userName;
 
         const match = await this.matchService.create({
           matchedUserOne: booking.userId,
@@ -633,14 +635,17 @@ export class InterviewBookingService {
             myBestMomentUser,
             userId,
             match._id,
+            booking.userId['userName'],
           );
 
-          await this.mailerService.sendMatchMail(
-            [booking.userId['email']],
-            [booking.userId['userName']],
+          await this.mailerService.sendMatchedMail(
+            booking.userId['email'],
+            booking.userId['userName'],
+            myBestMomentUserName,
+            'Peer',
             date,
             `https://www.peerinterview.io/app/meet/${match._id}`,
-            [booking.userId['time_zone']],
+            booking.userId['time_zone'],
           );
         }
       }
@@ -656,6 +661,7 @@ export class InterviewBookingService {
     userId: string,
     conUser: string,
     matchId: string,
+    conUserName: string,
   ) {
     const booking = await this.interviewBookingModel
       .findOneAndUpdate(
@@ -670,12 +676,14 @@ export class InterviewBookingService {
       .populate({ path: 'userId', select: 'email' })
       .exec();
 
-    await this.mailerService.sendMatchMail(
-      [booking.userId['email']],
-      [booking.userId['userName']],
+    await this.mailerService.sendMatchedMail(
+      booking.userId['email'],
+      booking.userId['userName'],
+      conUserName,
+      'Peer',
       booking.date,
       `https://www.peerinterview.io/app/meet/${matchId}`,
-      [booking.userId['time_zone']],
+      booking.userId['time_zone'],
     );
 
     return booking;
@@ -862,12 +870,23 @@ export class InterviewBookingService {
       await inUserBooking.save();
       await booking.save();
 
-      await this.mailerService.sendMatchMail(
-        [booking.userId['email'], acceptingUser.email],
-        [booking.userId['userName'], acceptingUser.userName],
+      await this.mailerService.sendInvitationAcceptMail(
+        booking.userId['email'],
+        booking.userId['userName'],
+        acceptingUser.userName,
         booking.date,
         `https://www.peerinterview.io/app/meet/${match._id}`,
-        [booking.userId['time_zone'], acceptingUser.time_zone],
+        booking.userId['time_zone'],
+      );
+
+      await this.mailerService.sendMatchedMail(
+        acceptingUser.email,
+        acceptingUser.userName,
+        booking.userId['userName'],
+        'Friend',
+        booking.date,
+        `https://www.peerinterview.io/app/meet/${match._id}`,
+        acceptingUser.time_zone,
       );
 
       const sendUnlucky = booking.invite_users.filter(

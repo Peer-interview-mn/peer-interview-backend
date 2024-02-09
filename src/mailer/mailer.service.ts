@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Cancelled, MailForUnluckyOrSlow, Meeting } from '@/mailer/templateFuc';
 import * as moment from 'moment-timezone';
+import { DoMeeting } from '@/mailer/templateFuc/DoMeeting';
 
 @Injectable()
 export class MailerService {
@@ -63,12 +64,67 @@ export class MailerService {
         text: 'You have been matched meeting.',
         html: Meeting(
           userName[i],
+          'user',
           userDate.format('MMMM DD, YYYY'),
           userHour,
           link,
         ),
       });
     }
+  }
+
+  async sendInvitationAcceptMail(
+    email: string,
+    userName: string,
+    friendName: string,
+    date: Date,
+    link: string,
+    timeZone: string,
+  ) {
+    const userDate = moment.tz(date, timeZone || 'UTC');
+    const userHour = userDate.format('hh:mm A');
+    const forDate = userDate.format('MMMM DD, YYYY');
+
+    await this.sendMail({
+      toMail: email,
+      subject: `Exciting News - Confirmation and Details for Peer-to-Peer Hard Skill/Soft Skill Interview on ${forDate}`,
+      text: 'You have been matched meeting.',
+      html: Meeting(
+        userName,
+        friendName,
+        userDate.format('MMMM DD, YYYY'),
+        userHour,
+        link,
+      ),
+    });
+  }
+
+  async sendMatchedMail(
+    email: string,
+    userName: string,
+    friendName: string,
+    type: string,
+    date: Date,
+    link: string,
+    timeZone: string,
+  ) {
+    const userDate = moment.tz(date, timeZone || 'UTC');
+    const userHour = userDate.format('hh:mm A');
+    const forDate = userDate.format('MMMM DD, YYYY');
+
+    await this.sendMail({
+      toMail: email,
+      subject: `Exciting News - Confirmation and Details for Peer-to-${type} Hard Skill/Soft Skill Interview on ${forDate}`,
+      text: 'You have been matched meeting.',
+      html: DoMeeting(
+        userName,
+        friendName,
+        type,
+        userDate.format('MMMM DD, YYYY'),
+        userHour,
+        link,
+      ),
+    });
   }
 
   async unLuckyMail(email: string[], friendName: string, link: string) {
