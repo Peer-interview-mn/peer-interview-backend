@@ -58,7 +58,7 @@ export class MailerService {
       const forDate = userDate.format('MMMM DD, YYYY');
 
       await this.sendMail({
-        toMail: email,
+        toMail: email[i],
         subject: `Exciting News - Confirmation and Details for Peer-to-Peer Hard Skill/Soft Skill Interview on ${forDate}`,
         text: 'You have been matched meeting.',
         html: Meeting(

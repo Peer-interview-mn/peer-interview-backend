@@ -871,7 +871,7 @@ export class InterviewBookingService {
       );
 
       const sendUnlucky = booking.invite_users.filter(
-        (user) => user !== acceptingUser.email,
+        (mail) => mail !== acceptingUser.email,
       );
 
       await this.mailerService.unLuckyMail(
