@@ -5,31 +5,12 @@ export class CreateAuthInput {
   @ApiProperty({})
   @IsNotEmpty({ message: 'The description is required' })
   @IsString({ message: 'The description must be a string' })
-  firstName: string;
-
-  @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
-  lastName: string;
-
-  @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
   userName: string;
 
   @ApiProperty({})
   @IsNotEmpty({ message: 'The description is required' })
   @IsString({ message: 'The description must be a string' })
   email: string;
-
-  @ApiProperty({})
-  @IsNotEmpty({ message: 'The description is required' })
-  @IsString({ message: 'The description must be a string' })
-  password: string;
-
-  @ApiProperty({})
-  @IsString({ message: 'The description must be a string' })
-  profileImg: string;
 }
 
 export class LoginInput {

@@ -110,8 +110,29 @@ export class UsersService {
   async update(id: string, updateUserInput: UpdateUserInput) {
     try {
       const user = await this.userModel.findById(id);
+      if (!user.verifyAccount) {
+        throw new HttpException('Cannot be changed', HttpStatus.BAD_REQUEST);
+      }
+
       if (!user) {
         throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (updateUserInput.password) {
+        if (user.password) {
+          throw new HttpException(
+            'Password cannot be changed',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        const passwordRegex =
+          /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
+        const isValid = passwordRegex.test(updateUserInput.password);
+        if (!isValid)
+          throw new HttpException(
+            'The password must contain at least one uppercase letter, one special character, and one number.',
+            HttpStatus.BAD_REQUEST,
+          );
       }
 
       Object.assign(user, updateUserInput);

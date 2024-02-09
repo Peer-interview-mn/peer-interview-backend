@@ -11,6 +11,10 @@ export class UpdateUserInput {
   @IsString({ message: 'The lastName must be a string' })
   lastName: string;
 
+  @ApiProperty({})
+  @IsString({ message: 'The password must be a string' })
+  password: string;
+
   @ApiProperty({ type: [SocialInput] })
   socials?: SocialType[] | null;
 

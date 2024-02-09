@@ -89,7 +89,7 @@ export class AuthService {
   }
 
   async register(createAuthInput: CreateAuthInput) {
-    const { password, userName, email, lastName, firstName } = createAuthInput;
+    const { userName, email } = createAuthInput;
 
     const haveUser = await this.usersService.findOne(email);
     const haveUserName = await this.usersService.findByFields({
@@ -97,16 +97,6 @@ export class AuthService {
     });
 
     if (haveUser) {
-      if (
-        !haveUser.verifyAccount &&
-        haveUser.lastName === lastName.toLowerCase() &&
-        haveUser.firstName === firstName.toLowerCase() &&
-        haveUser.userName === userName.toLowerCase()
-      ) {
-        haveUser.email = email;
-        await haveUser.save();
-        return haveUser;
-      }
       throw new HttpException(
         `this ${email} mail already exists`,
         HttpStatus.BAD_REQUEST,
@@ -114,29 +104,11 @@ export class AuthService {
     }
 
     if (haveUserName) {
-      if (
-        !haveUserName.verifyAccount &&
-        haveUserName.lastName === lastName.toLowerCase() &&
-        haveUserName.firstName === firstName.toLowerCase()
-      ) {
-        haveUserName.email = email;
-        await haveUserName.save();
-        return haveUserName;
-      }
       throw new HttpException(
         `this ${userName} username already exists`,
         HttpStatus.BAD_REQUEST,
       );
     }
-
-    const passwordRegex =
-      /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
-    const isValid = passwordRegex.test(password);
-    if (!isValid)
-      throw new HttpException(
-        'The password must contain at least one uppercase letter, one special character, and one number.',
-        HttpStatus.BAD_REQUEST,
-      );
 
     try {
       const newUser = await this.usersService.create(createAuthInput);
