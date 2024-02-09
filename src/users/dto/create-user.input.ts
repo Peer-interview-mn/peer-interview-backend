@@ -31,6 +31,13 @@ export class SkillInput {
   name: string;
 }
 
+export class CreateUserInputNew {
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The email is required' })
+  @IsString({ message: 'The email must be a string' })
+  email: string;
+}
+
 export class CreateUserInput {
   @ApiProperty({})
   @IsNotEmpty({ message: 'The userName is required' })

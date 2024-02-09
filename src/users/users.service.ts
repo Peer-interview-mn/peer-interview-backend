@@ -1,6 +1,19 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateUserInput, GoogleUserInput } from './dto/create-user.input';
-import { UpdateUserInput } from './dto/update-user.input';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import {
+  CreateUserInput,
+  CreateUserInputNew,
+  GoogleUserInput,
+} from './dto/create-user.input';
+import {
+  ChangePassInput,
+  UpdateUserInput,
+  UpdateUserInputNew,
+} from './dto/update-user.input';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@/users/entities/user.entity';
 import { Model } from 'mongoose';
@@ -13,6 +26,15 @@ export class UsersService {
   ) {}
 
   async create(createUserInput: CreateUserInput) {
+    try {
+      const user = new this.userModel(createUserInput);
+      return await user.save();
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  async createNew(createUserInput: CreateUserInputNew) {
     try {
       const user = new this.userModel(createUserInput);
       return await user.save();
@@ -138,6 +160,111 @@ export class UsersService {
       Object.assign(user, updateUserInput);
       await user.save();
       return user;
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async updateNew(id: string, updateUserInput: UpdateUserInputNew) {
+    const { userName, password } = updateUserInput;
+    try {
+      const user = await this.userModel.findById(id);
+
+      if (!user) {
+        throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (!user.verifyAccount) {
+        throw new HttpException('Cannot be changed', HttpStatus.BAD_REQUEST);
+      }
+
+      if (userName) {
+        const haveUserName = await this.userModel.findOne({
+          userName: userName,
+        });
+
+        if (haveUserName) {
+          if (
+            haveUserName &&
+            haveUserName.email === user.email &&
+            haveUserName.userName === userName
+          ) {
+            user.userName = userName;
+          } else {
+            throw new HttpException(
+              `this ${userName} username already exists`,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+        }
+      }
+
+      if (password) {
+        if (user.password) {
+          throw new HttpException(
+            'Password cannot be changed',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        const passwordRegex =
+          /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
+        const isValid = passwordRegex.test(password);
+        if (!isValid) {
+          throw new HttpException(
+            'The password must contain at least one uppercase letter, one special character, and one number.',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+
+      Object.assign(user, updateUserInput);
+      await user.save();
+      return user;
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async changePass(userId: string, dto: ChangePassInput) {
+    const { oldPassword, newPassword } = dto;
+    try {
+      const user = await this.userModel
+        .findById(userId)
+        .select('+password')
+        .exec();
+
+      if (!user) {
+        throw new HttpException('not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (!user.password) {
+        throw new UnauthorizedException(
+          'Password not matched, Please make sure your passwords.',
+        );
+      }
+
+      const pass = await user.comparePassword(oldPassword);
+
+      if (!pass) {
+        throw new UnauthorizedException(
+          'Password not matched, Please make sure your passwords.',
+        );
+      }
+
+      const passwordRegex =
+        /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+])[a-zA-Z0-9!@#$%^&*()_+]{8,}$/;
+
+      const isValid = passwordRegex.test(newPassword);
+      if (!isValid) {
+        throw new HttpException(
+          'The password must contain at least one uppercase letter, one special character, and one number.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      user.password = newPassword;
+      await user.save();
+      return true;
     } catch (e) {
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }

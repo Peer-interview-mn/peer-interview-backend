@@ -5,6 +5,7 @@ import {
   ChangePasswordInput,
   CheckPassOtpInput,
   CreateAuthInput,
+  CreateAuthInputNew,
   EmailInput,
   LoginInput,
   ResetTokenInput,
@@ -26,6 +27,11 @@ export class AuthController {
   @Post('sign-up')
   async register(@Body() createAuthInput: CreateAuthInput) {
     return await this.authService.register(createAuthInput);
+  }
+
+  @Post('v1/sign-up')
+  async registerNew(@Body() createAuthInput: CreateAuthInputNew) {
+    return await this.authService.registerNew(createAuthInput);
   }
 
   @Post('sign-in')

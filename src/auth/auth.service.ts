@@ -9,6 +9,7 @@ import {
   ChangePasswordInput,
   CheckPassOtpInput,
   CreateAuthInput,
+  CreateAuthInputNew,
   EmailInput,
   GoogleUserInput,
   LoginInput,
@@ -85,6 +86,27 @@ export class AuthService {
       );
     } catch (error) {
       throw new BadRequestException('Failed to authenticate with Google');
+    }
+  }
+
+  async registerNew(createAuthInput: CreateAuthInputNew) {
+    const { email } = createAuthInput;
+
+    const haveUser = await this.usersService.findOne(email);
+
+    if (haveUser) {
+      throw new HttpException(
+        `this ${email} mail already exists`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      const newUser = await this.usersService.createNew(createAuthInput);
+      if (newUser) return newUser;
+      throw new HttpException('Something went wrong', HttpStatus.NOT_FOUND);
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
     }
   }
 

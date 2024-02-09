@@ -1,6 +1,13 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
+export class CreateAuthInputNew {
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'The description is required' })
+  @IsString({ message: 'The description must be a string' })
+  email: string;
+}
+
 export class CreateAuthInput {
   @ApiProperty({})
   @IsNotEmpty({ message: 'The description is required' })

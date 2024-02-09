@@ -10,7 +10,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@/users/users.service';
-import { UpdateUserInput } from '@/users/dto/update-user.input';
+import {
+  ChangePassInput,
+  UpdateUserInput,
+  UpdateUserInputNew,
+} from '@/users/dto/update-user.input';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('users')
@@ -52,8 +56,33 @@ export class UsersController {
     return await this.usersService.update(userId, updateUserInput);
   }
 
-  @Delete(':userId')
-  async deleteUser(@Param('userId') id: string) {
-    return await this.usersService.remove(id);
+  @ApiBearerAuth()
+  @Patch('v1/updateProfile')
+  @UseGuards(AuthGuard('jwt'))
+  async updateUserNew(
+    @Request() req,
+    @Body() updateUserInput: UpdateUserInputNew,
+  ) {
+    const userId = req.user._id;
+    return await this.usersService.updateNew(userId, updateUserInput);
+  }
+
+  @ApiBearerAuth()
+  @Patch('change-password')
+  @UseGuards(AuthGuard('jwt'))
+  async changePassword(
+    @Request() req,
+    @Body() changePassInput: ChangePassInput,
+  ) {
+    const userId = req.user._id;
+    return await this.usersService.changePass(userId, changePassInput);
+  }
+
+  @ApiBearerAuth()
+  @Delete('me')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteUser(@Request() req) {
+    const userId = req.user._id;
+    return await this.usersService.remove(userId);
   }
 }
