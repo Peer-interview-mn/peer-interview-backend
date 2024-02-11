@@ -573,12 +573,10 @@ export class InterviewBookingService {
         .exec();
 
       if (!booking) {
-        {
-          throw new HttpException(
-            'This interview booking cannot be changed',
-            HttpStatus.BAD_REQUEST,
-          );
-        }
+        throw new HttpException(
+          'This interview booking cannot be changed',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       if (date) {
@@ -617,7 +615,7 @@ export class InterviewBookingService {
       if (thisMomentMatch.points.length) {
         const myBestMoment = thisMomentMatch.points[0]?.bestCore;
         const myBestMomentUser = thisMomentMatch.points[0]?.bestId;
-        const myBestMomentUserName = thisMomentMatch.points[0]?.userName;
+        const myBestMomentUserName = thisMomentMatch.points[0]?.bestName;
 
         const match = await this.matchService.create({
           matchedUserOne: booking.userId,
