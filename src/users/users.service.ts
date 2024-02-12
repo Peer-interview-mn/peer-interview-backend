@@ -39,7 +39,7 @@ export class UsersService {
       const user = new this.userModel(createUserInput);
       return await user.save();
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -48,7 +48,7 @@ export class UsersService {
       const user = new this.userModel(createUserInput);
       return await user.save();
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 

@@ -106,7 +106,7 @@ export class AuthService {
       if (newUser) return newUser;
       throw new HttpException('Something went wrong', HttpStatus.NOT_FOUND);
     } catch (e) {
-      throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 
