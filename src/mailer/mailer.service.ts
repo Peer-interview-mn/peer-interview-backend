@@ -5,6 +5,7 @@ import * as nodemailer from 'nodemailer';
 import { Cancelled, MailForUnluckyOrSlow, Meeting } from '@/mailer/templateFuc';
 import * as moment from 'moment-timezone';
 import { DoMeeting } from '@/mailer/templateFuc/DoMeeting';
+import ical from 'ical-generator';
 
 @Injectable()
 export class MailerService {
@@ -26,7 +27,7 @@ export class MailerService {
   }
 
   async sendMail(sendMail: MailDto) {
-    const { toMail, subject, text, html } = sendMail;
+    const { toMail, subject, text, html, iCalContent } = sendMail;
     const transport = this.mailTransport();
     const fromMail = this.configService.get<string>('smtp.from');
     try {
@@ -36,6 +37,11 @@ export class MailerService {
         subject: subject,
         text: text,
         html: html,
+        alternatives: {
+          contentType: 'text/calendar; charset="utf-8"; method=REQUEST',
+          method: 'REQUEST',
+          content: iCalContent,
+        },
       });
 
       return send;
@@ -44,6 +50,16 @@ export class MailerService {
     } finally {
       transport.close();
     }
+  }
+
+  async sendCalendar(toMail: string | string[], content: any) {
+    await this.sendMail({
+      toMail: toMail,
+      subject: 'Your interview calendar',
+      text: 'Your interview calendar',
+      html: '',
+      iCalContent: content,
+    });
   }
 
   async sendMatchMail(
@@ -152,5 +168,35 @@ export class MailerService {
       text: 'You have been unlucky',
       html: Cancelled(userName, forDate, userHour),
     });
+  }
+
+  async createCalendarEvent(
+    name: string,
+    description: string,
+    startDate: Date,
+    link: string,
+  ) {
+    moment.tz.setDefault('UTC');
+
+    const calendar = ical({ name: name });
+
+    const start = moment(startDate).tz('UTC');
+
+    const createEvent = {
+      start: start.toDate(),
+      end: start.clone().add(2, 'hours').toDate(),
+      location: 'Virtual',
+      organizer: {
+        name: 'PeerInterview',
+        email: 'peerinterview@gmail.mn',
+      },
+      summary: name,
+      description: description,
+      url: link,
+    };
+
+    calendar.createEvent(createEvent);
+
+    return calendar.toString();
   }
 }

@@ -5,4 +5,5 @@ export type MailDto = {
   subject: string;
   text: string;
   html: string;
+  iCalContent?: any;
 };
