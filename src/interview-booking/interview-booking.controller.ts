@@ -14,6 +14,7 @@ import {
 import { InterviewBookingService } from './interview-booking.service';
 import {
   CreateInterviewBookingDto,
+  InvitesToBookingDto,
   InviteToBookingDto,
 } from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
@@ -96,16 +97,19 @@ export class InterviewBookingController {
   @ApiBearerAuth()
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(MongoSessionInterceptor)
   async update(
     @Request() req,
     @Param('id') id: string,
     @Body() updateInterviewBookingDto: UpdateInterviewBookingDto,
+    @MongoSession() session: ClientSession,
   ) {
     const userId = req.user._id;
     return await this.interviewBookingService.update(
       userId,
       id,
       updateInterviewBookingDto,
+      session,
     );
   }
 
@@ -133,14 +137,33 @@ export class InterviewBookingController {
     );
   }
 
+  @ApiBearerAuth()
+  @Post('v1/invite-to-interview-booking/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async invitesToBooking(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() inviteToBookingDto: InvitesToBookingDto,
+  ) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.invitesToBooking(
+      id,
+      userId,
+      inviteToBookingDto.emails,
+    );
+  }
+
   @Post('accept-to-booking-invite/:id')
+  @UseInterceptors(MongoSessionInterceptor)
   async acceptedToBookingInvite(
     @Param('id') id: string,
     @Body() inviteToBookingDto: InviteToBookingDto,
+    @MongoSession() session: ClientSession,
   ) {
     return await this.interviewBookingService.acceptedToBookingInvite(
       id,
       inviteToBookingDto.email,
+      session,
     );
   }
 

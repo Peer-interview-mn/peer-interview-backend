@@ -554,6 +554,7 @@ export class InterviewBookingService {
     userId: string,
     id: string,
     updateInterviewBookingDto: UpdateInterviewBookingDto,
+    session: ClientSession,
   ) {
     const { date } = updateInterviewBookingDto;
     delete updateInterviewBookingDto['userId'];
@@ -567,7 +568,7 @@ export class InterviewBookingService {
             process: { $in: [InterviewBookingProcessType.PENDING] },
           },
           { ...updateInterviewBookingDto },
-          { new: true },
+          { new: true, session: session },
         )
         .populate({ path: 'userId', select: 'email userName time_zone' })
         .exec();
@@ -634,6 +635,7 @@ export class InterviewBookingService {
             userId,
             match._id,
             booking.userId['userName'],
+            session,
           );
 
           await this.mailerService.sendMatchedMail(
@@ -647,7 +649,7 @@ export class InterviewBookingService {
           );
         }
       }
-      await booking.save();
+      await booking.save({ session });
       return booking;
     } catch (e) {
       throw new BadRequestException(e.message);
@@ -660,6 +662,7 @@ export class InterviewBookingService {
     conUser: string,
     matchId: string,
     conUserName: string,
+    session: ClientSession,
   ) {
     const booking = await this.interviewBookingModel
       .findOneAndUpdate(
@@ -669,7 +672,7 @@ export class InterviewBookingService {
           connection_userId: conUser,
           meetId: matchId,
         },
-        { new: true },
+        { new: true, session: session },
       )
       .populate({ path: 'userId', select: 'email' })
       .exec();
@@ -709,10 +712,13 @@ export class InterviewBookingService {
 
   async inviteToBooking(id: string, userId: string, email: string) {
     try {
-      const booking = await this.interviewBookingModel.findOne({
-        _id: id,
-        userId: userId,
-      });
+      const booking = await this.interviewBookingModel
+        .findOne({
+          _id: id,
+          userId: userId,
+        })
+        .populate({ path: 'userId', select: 'email time_zone userName' })
+        .exec();
 
       if (!booking) {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
@@ -736,7 +742,7 @@ export class InterviewBookingService {
         toMail: email,
         subject: 'Invitation to Friend to Friend Interview',
         text: 'You have been invited to join a meeting.',
-        html: InviteFriend(invitationLink),
+        html: InviteFriend(invitationLink, booking.userId['userName']),
       });
 
       if (!emailSent) {
@@ -744,6 +750,48 @@ export class InterviewBookingService {
       }
 
       booking.invite_users.push(email);
+      await booking.save();
+
+      return { success: true, booking };
+    } catch (e) {
+      throw new BadRequestException(`Error inviting to booking: ${e.message}`);
+    }
+  }
+
+  async invitesToBooking(id: string, userId: string, emails: string[]) {
+    try {
+      const booking = await this.interviewBookingModel
+        .findOne({
+          _id: id,
+          userId: userId,
+        })
+        .populate({ path: 'userId', select: 'email time_zone userName' })
+        .exec();
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (booking.invite_users.length > 5 || emails.length > 5) {
+        throw new HttpException(
+          'Friend invite limit reached. You can only invite 5 people',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+
+      const invitationLink = `https://peerinterview.io/app/invite-to-meeting/${id}`;
+      const emailSent = await this.mailerService.sendMail({
+        toMail: emails,
+        subject: 'Invitation to Friend to Friend Interview',
+        text: 'You have been invited to join a meeting.',
+        html: InviteFriend(invitationLink, booking.userId['userName']),
+      });
+
+      if (!emailSent) {
+        return { success: false, message: 'Failed to send invitation email.' };
+      }
+
+      booking.invite_users = emails;
       await booking.save();
 
       return { success: true, booking };
@@ -817,7 +865,11 @@ export class InterviewBookingService {
     }
   }
 
-  async acceptedToBookingInvite(id: string, email: string) {
+  async acceptedToBookingInvite(
+    id: string,
+    email: string,
+    session: ClientSession,
+  ) {
     try {
       const booking = await this.interviewBookingModel
         .findById(id)
@@ -865,8 +917,8 @@ export class InterviewBookingService {
       booking.meetId = match._id;
       booking.process = InterviewBookingProcessType.MATCHED;
 
-      await inUserBooking.save();
-      await booking.save();
+      await inUserBooking.save({ session });
+      await booking.save({ session });
 
       await this.mailerService.sendInvitationAcceptMail(
         booking.userId['email'],

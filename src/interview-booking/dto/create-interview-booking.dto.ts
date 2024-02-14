@@ -17,3 +17,9 @@ export class InviteToBookingDto {
   @IsString({ message: 'The email must be a string' })
   email: string;
 }
+
+export class InvitesToBookingDto {
+  @ApiProperty({})
+  @IsString({ message: 'The email must be a string array' })
+  emails: string[];
+}
