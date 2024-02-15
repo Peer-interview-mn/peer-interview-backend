@@ -252,6 +252,7 @@ export class InterviewBookingService {
     const { select, sort, page, limit, ...restQuery } = query;
     const options = {
       invite_users: { $in: user.email },
+      process: { $ne: InterviewBookingProcessType.MATCHED },
       ...restQuery,
     };
 
@@ -609,6 +610,10 @@ export class InterviewBookingService {
         },
       })
       .populate({ path: 'userId', select: 'email userName time_zone' })
+      .populate({
+        path: 'connection_userId',
+        select: 'email userName time_zone',
+      })
       .exec();
 
     if (!booking) {
@@ -617,15 +622,73 @@ export class InterviewBookingService {
 
     if (!date || interview_type || skill_type) {
       throw new HttpException(
-        'This interview order cannot be changed. You can only update the date',
+        'You can only update the date for this interview',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const userDate = moment.tz(date, 'UTC');
+    const bookDate = moment.tz(booking.date, 'UTC');
+    if (userDate.isSame(bookDate)) {
+      throw new HttpException(
+        'This time slot has already been booked. Please choose another time.',
         HttpStatus.BAD_REQUEST,
       );
     }
 
     await this.helpsToCheckDate(id, date, userId);
+    const match = await this.matchService.findOne(booking.meetId, userId);
+    const meetUrl = `https://www.peerinterview.io/app/meet/${match._id}`;
+    const sendCalendar = await this.mailerService.createCalendarEvent(
+      'Meet calendar',
+      `Your interview calendar`,
+      date,
+      meetUrl,
+    );
+    if (booking.interview_type === InterviewType.PEERS) {
+      const someUser = await this.interviewBookingModel
+        .findOne({
+          userId: { $ne: userId },
+          meetId: booking.meetId,
+        })
+        .populate({ path: 'userId', select: 'email userName time_zone' })
+        .populate({
+          path: 'connection_userId',
+          select: 'email userName',
+        })
+        .exec();
+
+      if (!someUser) {
+        throw new HttpException(
+          'This interview booking cannot be changed',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      someUser.date = date;
+      await someUser.save({ session });
+      await this.mailerService.changeMeetTime(date, someUser);
+      await this.mailerService.sendCalendar(
+        [booking.userId['email'], someUser.userId['email']],
+        sendCalendar,
+      );
+    }
 
     booking.date = date;
+    match.date = date;
+
+    await match.save({ session });
     await booking.save({ session });
+
+    await this.mailerService.changeMeetTimeFriend(date, booking);
+    await this.mailerService.sendMatchNoft(date, booking);
+
+    if (booking.interview_type === InterviewType.FRIEND) {
+      await this.mailerService.sendCalendar(
+        [booking.userId['email'], booking.connection_userId['email']],
+        sendCalendar,
+      );
+    }
     return booking;
   }
 
@@ -635,10 +698,9 @@ export class InterviewBookingService {
     updateInterviewBookingDto: UpdateInterviewBookingDto,
     session: ClientSession,
   ) {
-    const { date } = updateInterviewBookingDto;
+    const { date, ...rest } = updateInterviewBookingDto;
     const copy = updateInterviewBookingDto;
     delete updateInterviewBookingDto['userId'];
-    delete updateInterviewBookingDto['date'];
     try {
       const matchedUpdate = await this.updateMatchedBooking(
         id,
@@ -660,7 +722,7 @@ export class InterviewBookingService {
               $in: [InterviewBookingProcessType.PENDING],
             },
           },
-          { ...updateInterviewBookingDto },
+          { ...rest },
           { new: true, session: session },
         )
         .populate({ path: 'userId', select: 'email userName time_zone' })
@@ -950,7 +1012,7 @@ export class InterviewBookingService {
       );
     }
 
-    if (booking.invite_url.includes(email)) {
+    if (!booking.invite_users.includes(email)) {
       throw new HttpException(
         'Oops!. You are not invited',
         HttpStatus.NOT_FOUND,
@@ -1002,10 +1064,19 @@ export class InterviewBookingService {
 
   async acceptedToBookingInvite(
     id: string,
-    email: string,
+    userId: string,
     session: ClientSession,
   ) {
     try {
+      const user = await this.usersService.findByFields({ _id: userId });
+
+      if (!user) {
+        throw new HttpException(
+          'This email is not registered. Please register on this platform to accept the invitation.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
       const booking = await this.interviewBookingModel
         .findById(id)
         .populate({ path: 'userId', select: 'email time_zone userName' })
@@ -1015,20 +1086,13 @@ export class InterviewBookingService {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
 
-      await this.checkInviteConditions(booking, email);
-
-      const acceptingUser = await this.usersService.findOne(email);
-      if (!acceptingUser) {
-        throw new HttpException(
-          'This email is not registered. Please register on this platform to accept the invitation.',
-          HttpStatus.NOT_FOUND,
-        );
-      }
+      await this.checkInviteConditions(booking, user.email);
+      await this.helpsToCheckDate(id, booking.date, userId);
 
       const match = await this.matchService.create(
         {
           matchedUserOne: booking.userId,
-          matchedUserTwo: acceptingUser._id,
+          matchedUserTwo: user._id,
           date: booking.date,
           skill_type: booking.skill_type,
           interview_type: booking.interview_type,
@@ -1051,7 +1115,7 @@ export class InterviewBookingService {
       //   meetId: match._id,
       // });
 
-      booking.connection_userId = acceptingUser._id;
+      booking.connection_userId = user._id;
       booking.meetId = match._id;
       booking.process = InterviewBookingProcessType.MATCHED;
 
@@ -1061,20 +1125,20 @@ export class InterviewBookingService {
       await this.mailerService.sendInvitationAcceptMail(
         booking.userId['email'],
         booking.userId['userName'],
-        acceptingUser.userName,
+        user.userName,
         booking.date,
         matchUrl,
         booking.userId['time_zone'],
       );
 
       await this.mailerService.sendMatchedMail(
-        acceptingUser.email,
-        acceptingUser.userName,
+        user.email,
+        user.userName,
         booking.userId['userName'],
         'Friend',
         booking.date,
         matchUrl,
-        acceptingUser.time_zone,
+        user.time_zone,
       );
 
       const sendCalendar = await this.mailerService.createCalendarEvent(
@@ -1085,12 +1149,12 @@ export class InterviewBookingService {
       );
 
       await this.mailerService.sendCalendar(
-        [booking.userId['email'], acceptingUser.email],
+        [booking.userId['email'], user.email],
         sendCalendar,
       );
 
       const sendUnlucky = booking.invite_users.filter(
-        (mail) => mail !== acceptingUser.email,
+        (mail) => mail !== user.email,
       );
 
       await this.mailerService.unLuckyMail(

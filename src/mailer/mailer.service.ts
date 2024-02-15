@@ -2,10 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { MailDto } from './dto/create-mailer.input';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { Cancelled, MailForUnluckyOrSlow, Meeting } from '@/mailer/templateFuc';
+import {
+  BookingNotification,
+  Cancelled,
+  ChangeMeetTime,
+  MailForUnluckyOrSlow,
+  Meeting,
+} from '@/mailer/templateFuc';
 import * as moment from 'moment-timezone';
 import { DoMeeting } from '@/mailer/templateFuc/DoMeeting';
 import ical from 'ical-generator';
+import { InterviewBooking } from '@/interview-booking/entities/interview-booking.entity';
 
 @Injectable()
 export class MailerService {
@@ -55,8 +62,8 @@ export class MailerService {
   async sendCalendar(toMail: string | string[], content: any) {
     await this.sendMail({
       toMail: toMail,
-      subject: 'Your interview calendar',
-      text: 'Your interview calendar',
+      subject: 'Peer interview platform',
+      text: 'Peer interview platform',
       html: '',
       iCalContent: content,
     });
@@ -111,6 +118,62 @@ export class MailerService {
         userDate.format('MMMM DD, YYYY'),
         userHour,
         link,
+      ),
+    });
+  }
+
+  async sendMatchNoft(date: Date, booking: InterviewBooking) {
+    const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
+    const userHour = userDate.format('hh:mm A');
+    const simpleUrl = 'https://www.peerinterview.io/app';
+    await this.sendMail({
+      toMail: booking.userId['email'],
+      subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
+      text: 'You have been booked meeting.',
+      html: BookingNotification(
+        booking.userId['userName'],
+        userDate.format('MMMM DD, YYYY'),
+        userHour,
+        simpleUrl,
+      ),
+    });
+  }
+
+  async changeMeetTime(date: Date, booking: InterviewBooking) {
+    const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
+    const userHour = userDate.format('hh:mm A');
+    const simpleUrl = `https://www.peerinterview.io/app/meet/${booking.meetId}`;
+    await this.sendMail({
+      toMail: booking.userId['email'],
+      subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
+      text: 'You have been booked meeting.',
+      html: ChangeMeetTime(
+        booking.userId['userName'],
+        booking.connection_userId['userName'],
+        userDate.format('MMMM DD, YYYY'),
+        userHour,
+        simpleUrl,
+      ),
+    });
+  }
+
+  async changeMeetTimeFriend(date: Date, booking: InterviewBooking) {
+    const userDate = moment.tz(
+      date,
+      booking.connection_userId['time_zone'] || 'UTC',
+    );
+    const userHour = userDate.format('hh:mm A');
+    const simpleUrl = `https://www.peerinterview.io/app/meet/${booking.meetId}`;
+    await this.sendMail({
+      toMail: booking.connection_userId['email'],
+      subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
+      text: 'You have been booked meeting.',
+      html: ChangeMeetTime(
+        booking.connection_userId['userName'],
+        booking.userId['userName'],
+        userDate.format('MMMM DD, YYYY'),
+        userHour,
+        simpleUrl,
       ),
     });
   }

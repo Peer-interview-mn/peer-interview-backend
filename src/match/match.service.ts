@@ -66,6 +66,32 @@ export class MatchService {
     return match;
   }
 
+  async updateDate(
+    id: string,
+    userId: string,
+    date: Date,
+    session: ClientSession,
+  ) {
+    const match = await this.matchModel
+      .findOneAndUpdate(
+        {
+          _id: id,
+          $or: [{ matchedUserOne: userId }, { matchedUserTwo: userId }],
+        },
+        { $set: { date: date } },
+        { new: true, session: session },
+      )
+      .populate({ path: 'matchedUserOne' })
+      .populate({ path: 'matchedUserTwo' })
+      .exec();
+
+    if (!match) {
+      throw new HttpException('not found', HttpStatus.NOT_FOUND);
+    }
+
+    return match;
+  }
+
   async cancelMatch(id: string, userId: string, session: ClientSession) {
     try {
       const cMatch = await this.matchModel.findOneAndDelete(

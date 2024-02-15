@@ -161,16 +161,19 @@ export class InterviewBookingController {
     );
   }
 
+  @ApiBearerAuth()
   @Post('accept-to-booking-invite/:id')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(MongoSessionInterceptor)
   async acceptedToBookingInvite(
+    @Request() req,
     @Param('id') id: string,
-    @Body() inviteToBookingDto: InviteToBookingDto,
     @MongoSession() session: ClientSession,
   ) {
+    const userId = req.user._id;
     return await this.interviewBookingService.acceptedToBookingInvite(
       id,
-      inviteToBookingDto.email,
+      userId,
       session,
     );
   }
