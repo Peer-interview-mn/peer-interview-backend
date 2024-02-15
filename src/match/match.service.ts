@@ -21,9 +21,9 @@ export class MatchService {
     private readonly interviewBookingModel: Model<InterviewBooking>,
     private mailerService: MailerService,
   ) {}
-  async create(createMatchDto: CreateMatchDto) {
+  async create(createMatchDto: CreateMatchDto, session: ClientSession) {
     const match = new this.matchModel(createMatchDto);
-    await match.save();
+    await match.save({ session });
 
     return match;
   }

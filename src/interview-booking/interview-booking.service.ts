@@ -210,6 +210,7 @@ export class InterviewBookingService {
 
     const options = {
       userId: id,
+      date: { $ne: null },
       ...query,
     };
 
@@ -619,13 +620,16 @@ export class InterviewBookingService {
         const myBestMomentUser = thisMomentMatch.points[0]?.bestId;
         const myBestMomentUserName = thisMomentMatch.points[0]?.bestName;
 
-        const match = await this.matchService.create({
-          matchedUserOne: booking.userId,
-          matchedUserTwo: myBestMomentUser,
-          date: booking.date,
-          skill_type: booking.skill_type,
-          interview_type: booking.interview_type,
-        });
+        const match = await this.matchService.create(
+          {
+            matchedUserOne: booking.userId,
+            matchedUserTwo: myBestMomentUser,
+            date: booking.date,
+            skill_type: booking.skill_type,
+            interview_type: booking.interview_type,
+          },
+          session,
+        );
         if (match) {
           booking.connection_userId = myBestMomentUser;
           booking.process = InterviewBookingProcessType.MATCHED;
@@ -917,13 +921,16 @@ export class InterviewBookingService {
         );
       }
 
-      const match = await this.matchService.create({
-        matchedUserOne: booking.userId,
-        matchedUserTwo: acceptingUser._id,
-        date: booking.date,
-        skill_type: booking.skill_type,
-        interview_type: booking.interview_type,
-      });
+      const match = await this.matchService.create(
+        {
+          matchedUserOne: booking.userId,
+          matchedUserTwo: acceptingUser._id,
+          date: booking.date,
+          skill_type: booking.skill_type,
+          interview_type: booking.interview_type,
+        },
+        session,
+      );
 
       if (!match) {
         throw new BadRequestException('Failed to accepted');
