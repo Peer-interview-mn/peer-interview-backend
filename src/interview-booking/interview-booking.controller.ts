@@ -62,6 +62,14 @@ export class InterviewBookingController {
   }
 
   @ApiBearerAuth()
+  @Get('list/request/me')
+  @UseGuards(AuthGuard('jwt'))
+  async findMeRequests(@Request() req, @Query() query: Record<string, any>) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.findMeRequest(userId, query);
+  }
+
+  @ApiBearerAuth()
   @Get('suggest-day/me/:id/:time')
   @UseGuards(AuthGuard('jwt'))
   async suggestMe(

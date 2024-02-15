@@ -112,14 +112,6 @@ export class UsersService {
     return await this.userModel.findOne(fields).exec();
   }
 
-  async forgotPassword(email: string) {
-    const user = await this.userModel.findOne({ email: email }).exec();
-
-    if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
-
-    return user;
-  }
-
   async findOneCheck(email: string) {
     const user = await this.userModel
       .findOne({ email })

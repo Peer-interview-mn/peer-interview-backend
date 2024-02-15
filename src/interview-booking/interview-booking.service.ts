@@ -209,12 +209,54 @@ export class InterviewBookingService {
     );
 
     const options = {
-      userId: id,
-      date: { $ne: null },
+      $or: [
+        { connection_userId: id },
+        { $and: [{ userId: id }, { date: { $ne: null } }] },
+      ],
       ...query,
     };
 
     const skip = (page - 1) * limit;
+    try {
+      await this.updateProcessMe(id);
+
+      const totalPolls = await this.interviewBookingModel.countDocuments(
+        options,
+      );
+      const totalPages = Math.ceil(totalPolls / limit);
+
+      const booking = await this.interviewBookingModel
+        .find(options, select)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path: 'userId',
+          select: 'userName firstName lastName email skills',
+        })
+        .populate({
+          path: 'connection_userId',
+          select: 'userName firstName lastName email skills',
+        })
+        .exec();
+
+      return { data: booking, pages: totalPages };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async findMeRequest(id: string, query: Record<string, any>) {
+    const user = await this.usersService.findOneId(id);
+
+    const { select, sort, page, limit, ...restQuery } = query;
+    const options = {
+      invite_users: { $in: user.email },
+      ...restQuery,
+    };
+
+    const skip = (page - 1) * limit;
+
     try {
       await this.updateProcessMe(id);
 
@@ -551,6 +593,42 @@ export class InterviewBookingService {
     return arr;
   }
 
+  async updateMatchedBooking(
+    id: string,
+    userId: string,
+    updateInterviewBookingDto: UpdateInterviewBookingDto,
+    session: ClientSession,
+  ) {
+    const { date, interview_type, skill_type } = updateInterviewBookingDto;
+    const booking = await this.interviewBookingModel
+      .findOne({
+        _id: id,
+        userId: userId,
+        process: {
+          $in: [InterviewBookingProcessType.MATCHED],
+        },
+      })
+      .populate({ path: 'userId', select: 'email userName time_zone' })
+      .exec();
+
+    if (!booking) {
+      return false;
+    }
+
+    if (!date || interview_type || skill_type) {
+      throw new HttpException(
+        'This interview order cannot be changed. You can only update the date',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.helpsToCheckDate(id, date, userId);
+
+    booking.date = date;
+    await booking.save({ session });
+    return booking;
+  }
+
   async update(
     userId: string,
     id: string,
@@ -558,15 +636,29 @@ export class InterviewBookingService {
     session: ClientSession,
   ) {
     const { date } = updateInterviewBookingDto;
+    const copy = updateInterviewBookingDto;
     delete updateInterviewBookingDto['userId'];
     delete updateInterviewBookingDto['date'];
     try {
+      const matchedUpdate = await this.updateMatchedBooking(
+        id,
+        userId,
+        copy,
+        session,
+      );
+
+      if (matchedUpdate) {
+        return matchedUpdate;
+      }
+
       const booking = await this.interviewBookingModel
         .findOneAndUpdate(
           {
             _id: id,
             userId: userId,
-            process: { $in: [InterviewBookingProcessType.PENDING] },
+            process: {
+              $in: [InterviewBookingProcessType.PENDING],
+            },
           },
           { ...updateInterviewBookingDto },
           { new: true, session: session },
@@ -607,6 +699,18 @@ export class InterviewBookingService {
             simpleUrl,
           ),
         });
+
+        const sendCalendar = await this.mailerService.createCalendarEvent(
+          'Meet calendar',
+          `Your interview calendar`,
+          booking.date,
+          simpleUrl,
+        );
+
+        await this.mailerService.sendCalendar(
+          booking.userId['email'],
+          sendCalendar,
+        );
       }
 
       const thisMomentMatch = await this.getSuggestThisMoment(
@@ -936,22 +1040,21 @@ export class InterviewBookingService {
         throw new BadRequestException('Failed to accepted');
       }
 
-      const inUserBooking = new this.interviewBookingModel({
-        userId: acceptingUser._id,
-        process: InterviewBookingProcessType.MATCHED,
-        connection_userId: booking.userId,
-        skill_type: booking.skill_type,
-        interview_type: booking.interview_type,
-        date: booking.date,
-        time: booking.time,
-        meetId: match._id,
-      });
+      // const inUserBooking = new this.interviewBookingModel({
+      //   userId: acceptingUser._id,
+      //   process: InterviewBookingProcessType.MATCHED,
+      //   connection_userId: booking.userId,
+      //   skill_type: booking.skill_type,
+      //   interview_type: booking.interview_type,
+      //   date: booking.date,
+      //   time: booking.time,
+      //   meetId: match._id,
+      // });
 
       booking.connection_userId = acceptingUser._id;
       booking.meetId = match._id;
       booking.process = InterviewBookingProcessType.MATCHED;
 
-      await inUserBooking.save({ session });
       await booking.save({ session });
       const matchUrl = `https://www.peerinterview.io/app/meet/${match._id}`;
 
@@ -996,7 +1099,7 @@ export class InterviewBookingService {
         'https://www.peerinterview.io/app',
       );
 
-      return inUserBooking;
+      return booking;
     } catch (e) {
       throw new BadRequestException(
         `Error accepting booking invite: ${e.message}`,
