@@ -8,7 +8,7 @@ import { CreateInterviewBookingDto } from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { InterviewBooking } from '@/interview-booking/entities/interview-booking.entity';
-import { Model, Types, ClientSession } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import * as moment from 'moment-timezone';
 import {
   InterviewBookingProcessType,
@@ -211,7 +211,12 @@ export class InterviewBookingService {
 
     const options = {
       $or: [
-        { connection_userId: id },
+        {
+          $and: [
+            { connection_userId: id },
+            { interview_type: InterviewType.FRIEND },
+          ],
+        },
         {
           $and: [{ userId: id }, { date: { $ne: null } }],
         },
