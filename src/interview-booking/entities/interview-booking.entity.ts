@@ -36,9 +36,6 @@ export class InterviewBooking extends BaseData {
   @Prop({ type: Date })
   date: Date;
 
-  @Prop({ type: String, default: null })
-  Utc: string;
-
   @Prop({ type: Number })
   time: number;
 
