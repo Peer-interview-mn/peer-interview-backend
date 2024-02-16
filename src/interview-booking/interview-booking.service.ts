@@ -1112,6 +1112,18 @@ export class InterviewBookingService {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
 
+      const twoHoursAgo = moment().subtract(2, 'hours');
+
+      if (moment(booking.updatedAt).isBefore(twoHoursAgo)) {
+        await this.interviewBookingModel.findByIdAndDelete(id, {
+          session: session,
+        });
+        throw new HttpException(
+          'This link has expired',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       await this.checkInviteConditions(booking, user.email);
 
       const match = await this.matchService.create(
@@ -1136,35 +1148,19 @@ export class InterviewBookingService {
       await booking.save({ session });
       const matchUrl = `https://www.peerinterview.io/app/meet/${match._id}`;
 
-      await this.mailerService.sendInvitationAcceptMail(
+      await this.mailerService.sendInvitationAcceptMailFriend(
         booking.userId['email'],
         booking.userId['userName'],
         user.userName,
-        booking.date,
         matchUrl,
-        booking.userId['time_zone'],
       );
 
-      await this.mailerService.sendMatchedMail(
+      await this.mailerService.sendMatchedMailFriend(
         user.email,
         user.userName,
         booking.userId['userName'],
         'Friend',
-        booking.date,
         matchUrl,
-        user.time_zone,
-      );
-
-      const sendCalendar = await this.mailerService.createCalendarEvent(
-        'Meet calendar',
-        `Your interview calendar`,
-        booking.date,
-        matchUrl,
-      );
-
-      await this.mailerService.sendCalendar(
-        [booking.userId['email'], user.email],
-        sendCalendar,
       );
 
       return booking;

@@ -6,8 +6,10 @@ import {
   BookingNotification,
   Cancelled,
   ChangeMeetTime,
+  DoMeetingFriend,
   MailForUnluckyOrSlow,
   Meeting,
+  MeetingFriend,
 } from '@/mailer/templateFuc';
 import * as moment from 'moment-timezone';
 import { DoMeeting } from '@/mailer/templateFuc/DoMeeting';
@@ -110,7 +112,7 @@ export class MailerService {
 
     await this.sendMail({
       toMail: email,
-      subject: `Exciting News - Confirmation and Details for Peer-to-Peer Hard Skill/Soft Skill Interview on ${forDate}`,
+      subject: `Exciting News - Confirmation and Details for Peer-to-Friend Hard Skill/Soft Skill Interview on ${forDate}`,
       text: 'You have been matched meeting.',
       html: Meeting(
         userName,
@@ -119,6 +121,20 @@ export class MailerService {
         userHour,
         link,
       ),
+    });
+  }
+
+  async sendInvitationAcceptMailFriend(
+    email: string,
+    userName: string,
+    friendName: string,
+    link: string,
+  ) {
+    await this.sendMail({
+      toMail: email,
+      subject: `Exciting News - Confirmation and Details for Peer-to-Friend Hard Skill/Soft Skill Interview`,
+      text: 'You have been matched meeting.',
+      html: MeetingFriend(userName, friendName, link),
     });
   }
 
@@ -203,6 +219,21 @@ export class MailerService {
         userHour,
         link,
       ),
+    });
+  }
+
+  async sendMatchedMailFriend(
+    email: string,
+    userName: string,
+    friendName: string,
+    type: string,
+    link: string,
+  ) {
+    await this.sendMail({
+      toMail: email,
+      subject: `Exciting News - Confirmation and Details for Peer-to-${type} Hard Skill/Soft Skill Interview`,
+      text: 'You have been matched meeting.',
+      html: DoMeetingFriend(userName, friendName, type, link),
     });
   }
 
