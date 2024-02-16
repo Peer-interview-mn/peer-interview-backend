@@ -15,7 +15,7 @@ export class Match extends BaseData {
   @Prop({ Type: String })
   interview_type: string;
 
-  @Prop({ type: Date })
+  @Prop({ type: Date, default: null })
   date: Date;
 }
 

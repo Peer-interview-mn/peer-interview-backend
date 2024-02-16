@@ -1108,13 +1108,12 @@ export class InterviewBookingService {
       }
 
       await this.checkInviteConditions(booking, user.email);
-      await this.helpsToCheckDate(id, booking.date, userId);
 
       const match = await this.matchService.create(
         {
           matchedUserOne: booking.userId,
           matchedUserTwo: user._id,
-          date: booking.date,
+          date: null,
           skill_type: booking.skill_type,
           interview_type: booking.interview_type,
         },
@@ -1124,17 +1123,6 @@ export class InterviewBookingService {
       if (!match) {
         throw new BadRequestException('Failed to accepted');
       }
-
-      // const inUserBooking = new this.interviewBookingModel({
-      //   userId: acceptingUser._id,
-      //   process: InterviewBookingProcessType.MATCHED,
-      //   connection_userId: booking.userId,
-      //   skill_type: booking.skill_type,
-      //   interview_type: booking.interview_type,
-      //   date: booking.date,
-      //   time: booking.time,
-      //   meetId: match._id,
-      // });
 
       booking.connection_userId = user._id;
       booking.meetId = match._id;
@@ -1172,16 +1160,6 @@ export class InterviewBookingService {
       await this.mailerService.sendCalendar(
         [booking.userId['email'], user.email],
         sendCalendar,
-      );
-
-      const sendUnlucky = booking.invite_users.filter(
-        (mail) => mail !== user.email,
-      );
-
-      await this.mailerService.unLuckyMail(
-        sendUnlucky,
-        booking.userId['userName'],
-        'https://www.peerinterview.io/app',
       );
 
       return booking;

@@ -1,6 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateInterviewBookingDto } from './create-interview-booking.dto';
-import { IsDate } from 'class-validator';
+import { IsDate, IsString } from 'class-validator';
 
 export class UpdateInterviewBookingDto extends PartialType(
   CreateInterviewBookingDto,
@@ -8,4 +8,8 @@ export class UpdateInterviewBookingDto extends PartialType(
   @ApiProperty({})
   @IsDate({ message: 'The date must be a Date' })
   date: Date;
+
+  @ApiProperty({})
+  @IsString({ message: 'The utc must be a String' })
+  Utc: Date;
 }

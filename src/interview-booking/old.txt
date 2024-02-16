@@ -1,0 +1,108 @@
+async acceptedToBookingInvite(
+    id: string,
+    userId: string,
+    session: ClientSession,
+  ) {
+    try {
+      const user = await this.usersService.findByFields({ _id: userId });
+
+      if (!user) {
+        throw new HttpException(
+          'This email is not registered. Please register on this platform to accept the invitation.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const booking = await this.interviewBookingModel
+        .findById(id)
+        .populate({ path: 'userId', select: 'email time_zone userName' })
+        .exec();
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      await this.checkInviteConditions(booking, user.email);
+      await this.helpsToCheckDate(id, booking.date, userId);
+
+      const match = await this.matchService.create(
+        {
+          matchedUserOne: booking.userId,
+          matchedUserTwo: user._id,
+          date: booking.date,
+          skill_type: booking.skill_type,
+          interview_type: booking.interview_type,
+        },
+        session,
+      );
+
+      if (!match) {
+        throw new BadRequestException('Failed to accepted');
+      }
+
+      // const inUserBooking = new this.interviewBookingModel({
+      //   userId: acceptingUser._id,
+      //   process: InterviewBookingProcessType.MATCHED,
+      //   connection_userId: booking.userId,
+      //   skill_type: booking.skill_type,
+      //   interview_type: booking.interview_type,
+      //   date: booking.date,
+      //   time: booking.time,
+      //   meetId: match._id,
+      // });
+
+      booking.connection_userId = user._id;
+      booking.meetId = match._id;
+      booking.process = InterviewBookingProcessType.MATCHED;
+
+      await booking.save({ session });
+      const matchUrl = `https://www.peerinterview.io/app/meet/${match._id}`;
+
+      await this.mailerService.sendInvitationAcceptMail(
+        booking.userId['email'],
+        booking.userId['userName'],
+        user.userName,
+        booking.date,
+        matchUrl,
+        booking.userId['time_zone'],
+      );
+
+      await this.mailerService.sendMatchedMail(
+        user.email,
+        user.userName,
+        booking.userId['userName'],
+        'Friend',
+        booking.date,
+        matchUrl,
+        user.time_zone,
+      );
+
+      const sendCalendar = await this.mailerService.createCalendarEvent(
+        'Meet calendar',
+        `Your interview calendar`,
+        booking.date,
+        matchUrl,
+      );
+
+      await this.mailerService.sendCalendar(
+        [booking.userId['email'], user.email],
+        sendCalendar,
+      );
+
+      const sendUnlucky = booking.invite_users.filter(
+        (mail) => mail !== user.email,
+      );
+
+      await this.mailerService.unLuckyMail(
+        sendUnlucky,
+        booking.userId['userName'],
+        'https://www.peerinterview.io/app',
+      );
+
+      return booking;
+    } catch (e) {
+      throw new BadRequestException(
+        `Error accepting booking invite: ${e.message}`,
+      );
+    }
+  }
