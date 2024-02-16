@@ -90,6 +90,7 @@ export class InterviewBookingService {
     try {
       const foundBooking = await this.interviewBookingModel.findOne({
         userId: userId,
+        interview_type: { $ne: InterviewType.FRIEND },
         date: null,
       });
 
@@ -211,7 +212,12 @@ export class InterviewBookingService {
     const options = {
       $or: [
         { connection_userId: id },
-        { $and: [{ userId: id }, { date: { $ne: null } }] },
+        {
+          $and: [{ userId: id }, { date: { $ne: null } }],
+        },
+        {
+          $and: [{ userId: id }, { interview_type: InterviewType.FRIEND }],
+        },
       ],
       ...query,
     };
@@ -620,6 +626,13 @@ export class InterviewBookingService {
       return false;
     }
 
+    if (booking.interview_type === InterviewType.FRIEND) {
+      throw new HttpException(
+        'You can only update the Peer interview',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     if (!date || interview_type || skill_type) {
       throw new HttpException(
         'You can only update the date for this interview',
@@ -720,6 +733,9 @@ export class InterviewBookingService {
             userId: userId,
             process: {
               $in: [InterviewBookingProcessType.PENDING],
+            },
+            interview_type: {
+              $ne: InterviewType.FRIEND,
             },
           },
           { ...rest },
@@ -892,7 +908,12 @@ export class InterviewBookingService {
       _id: id,
       userId: userId,
     });
-    if (!booking) throw new HttpException('not found', HttpStatus.NOT_FOUND);
+    if (!booking) {
+      throw new HttpException(
+        'This interview booking cannot be delete',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     if (booking.process === InterviewBookingProcessType.MATCHED) {
       throw new HttpException(
@@ -955,7 +976,7 @@ export class InterviewBookingService {
     }
   }
 
-  async invitesToBooking(id: string, userId: string, emails: string[]) {
+  async invitesToBooking(id: string, userId: string, email: string) {
     try {
       const booking = await this.interviewBookingModel
         .findOne({
@@ -969,16 +990,16 @@ export class InterviewBookingService {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
 
-      if (booking.invite_users.length > 5 || emails.length > 5) {
+      if (booking.invite_users.length > 1) {
         throw new HttpException(
-          'Friend invite limit reached. You can only invite 5 people',
+          'Friend invite limit reached. You can only invite one people',
           HttpStatus.BAD_GATEWAY,
         );
       }
 
       const invitationLink = `https://peerinterview.io/app/invite-to-meeting/${id}`;
       const emailSent = await this.mailerService.sendMail({
-        toMail: emails,
+        toMail: email,
         subject: 'Invitation to Friend to Friend Interview',
         text: 'You have been invited to join a meeting.',
         html: InviteFriend(invitationLink, booking.userId['userName']),
@@ -988,7 +1009,7 @@ export class InterviewBookingService {
         return { success: false, message: 'Failed to send invitation email.' };
       }
 
-      booking.invite_users = emails;
+      booking.invite_users.push(email);
       await booking.save();
 
       return { success: true, booking };

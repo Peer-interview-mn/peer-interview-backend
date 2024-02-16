@@ -157,7 +157,7 @@ export class InterviewBookingController {
     return await this.interviewBookingService.invitesToBooking(
       id,
       userId,
-      inviteToBookingDto.emails,
+      inviteToBookingDto.email,
     );
   }
 
