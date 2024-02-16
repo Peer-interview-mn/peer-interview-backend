@@ -1027,15 +1027,17 @@ export class InterviewBookingService {
     booking: InterviewBooking,
     email: string,
   ) {
-    const currentDate = moment().tz('UTC');
-    const minAllowedDate = currentDate.clone().add(10, 'minutes');
-    const providedDate = moment(booking.date).tz('UTC');
+    if (booking.date) {
+      const currentDate = moment().tz('UTC');
+      const minAllowedDate = currentDate.clone().add(10, 'minutes');
+      const providedDate = moment(booking.date).tz('UTC');
 
-    if (providedDate.isBefore(minAllowedDate)) {
-      throw new HttpException(
-        'You must receive this invitation at least 10 minutes in advance!',
-        HttpStatus.BAD_REQUEST,
-      );
+      if (providedDate.isBefore(minAllowedDate)) {
+        throw new HttpException(
+          'You must receive this invitation at least 10 minutes in advance!',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
 
     if (!booking.invite_users.includes(email)) {
