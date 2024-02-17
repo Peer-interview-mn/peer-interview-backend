@@ -221,7 +221,11 @@ export class InterviewBookingService {
           $and: [{ userId: id }, { date: { $ne: null } }],
         },
         {
-          $and: [{ userId: id }, { interview_type: InterviewType.FRIEND }],
+          $and: [
+            { userId: id },
+            { interview_type: InterviewType.FRIEND },
+            { 'invite_users.length': { $gt: 1 } },
+          ],
         },
       ],
       ...query,
