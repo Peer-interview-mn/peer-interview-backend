@@ -87,12 +87,19 @@ export class InterviewBookingService {
     createInterviewBookingDto: CreateInterviewBookingDto,
     session: ClientSession,
   ) {
+    const type =
+      createInterviewBookingDto.interview_type === InterviewType.FRIEND
+        ? InterviewType.PEERS
+        : InterviewType.FRIEND;
     try {
       const foundBooking = await this.interviewBookingModel.findOne({
         userId: userId,
-        interview_type: { $ne: InterviewType.FRIEND },
+        // interview_type: { $ne: InterviewType.FRIEND },
+        interview_type: { $ne: type },
         date: null,
       });
+      //65d0b3a493a7bc669d1ca16e peer
+      //65d0b4e886cd0addecc30ee9 friend
 
       if (!foundBooking) {
         const newBooking = new this.interviewBookingModel({
