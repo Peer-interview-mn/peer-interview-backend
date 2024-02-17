@@ -24,7 +24,6 @@ export class User extends BaseData {
   lastName: string;
 
   @Prop({
-    unique: true,
     lowercase: true,
   })
   userName: string;
@@ -99,7 +98,6 @@ export class User extends BaseData {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.index({ email: 1 });
-// UserSchema.index({ userName: 1 });
 
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
