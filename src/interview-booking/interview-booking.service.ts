@@ -224,7 +224,7 @@ export class InterviewBookingService {
           $and: [
             { userId: id },
             { interview_type: InterviewType.FRIEND },
-            { 'invite_users.length': { $gt: 0 } },
+            { 'invite_users.0': { $exists: true } },
           ],
         },
       ],
