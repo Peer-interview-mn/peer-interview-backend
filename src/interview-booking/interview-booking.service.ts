@@ -224,7 +224,7 @@ export class InterviewBookingService {
           $and: [
             { userId: id },
             { interview_type: InterviewType.FRIEND },
-            { 'invite_users.length': { $gt: 1 } },
+            { 'invite_users.length': { $gt: 0 } },
           ],
         },
       ],
