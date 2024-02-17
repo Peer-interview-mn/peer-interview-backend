@@ -879,7 +879,7 @@ export class InterviewBookingService {
         },
         { new: true, session: session },
       )
-      .populate({ path: 'userId', select: 'email' })
+      .populate({ path: 'userId', select: 'email userName time_zone' })
       .exec();
 
     const meetUrl = `https://www.peerinterview.io/app/meet/${matchId}`;
