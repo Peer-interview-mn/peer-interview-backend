@@ -215,6 +215,23 @@ export class InterviewBookingController {
     );
   }
 
+  @ApiBearerAuth()
+  @Get('cancel-invite-request/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(MongoSessionInterceptor)
+  async InviteBookingCancelRequest(
+    @Request() req,
+    @Param('id') id: string,
+    @MongoSession() session: ClientSession,
+  ) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.inviteBookingCancelRequest(
+      id,
+      userId,
+      session,
+    );
+  }
+
   @Get('check-invite-url/:id/:email')
   async checkUrl(@Param('id') id: string, @Param('email') email: string) {
     return await this.interviewBookingService.checkUrl(id, email);

@@ -979,7 +979,7 @@ export class InterviewBookingService {
         return { success: false, message: 'Failed to send invitation email.' };
       }
 
-      booking.invite_users.push(email);
+      booking.invite_users.push(email.toLowerCase());
       await booking.save();
 
       return { success: true, booking };
@@ -1222,6 +1222,41 @@ export class InterviewBookingService {
       }
 
       return booking;
+    } catch (e) {
+      throw new BadRequestException(
+        `Error accepting booking invite: ${e.message}`,
+      );
+    }
+  }
+
+  async inviteBookingCancelRequest(
+    id: string,
+    userId: string,
+    session: ClientSession,
+  ) {
+    try {
+      const booking = await this.interviewBookingModel.findById(id);
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      const user = await this.usersService.findOneId(userId);
+
+      if (!booking.invite_users.includes(user.email)) {
+        throw new HttpException(
+          'You are cannot change this booking',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      return await this.interviewBookingModel.findByIdAndUpdate(
+        id,
+        {
+          $pull: { invite_users: user.email },
+        },
+        { new: true, session: session },
+      );
     } catch (e) {
       throw new BadRequestException(
         `Error accepting booking invite: ${e.message}`,
