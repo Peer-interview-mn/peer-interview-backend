@@ -15,7 +15,8 @@ export const DoMeeting = (
         <ul>
           <li>Date: ${date}</li>
           <li>Time: ${time}</li>
-          <li>Simply click on the following link: <a href="${link}">${link}</a>.<br> Please ensure you're ready and connected at the specified time.
+<!--          <li>Simply click on the following link: <a href="${link}">${link}</a>.<br> Please ensure you're ready and connected at the specified time.-->
+          <li>Simply click on the following link: <a href="https://www.peerinterview.io/app">https://www.peerinterview.io/app</a>.<br> Please ensure you're ready and connected at the specified time.
           Thank you for bringing your skills and insights to the table.</li>
         </ul>
         <b>
