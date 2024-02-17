@@ -16,6 +16,7 @@ import {
   CreateInterviewBookingDto,
   InvitesToBookingDto,
   InviteToBookingDto,
+  InviteToBookingUserDto,
 } from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -172,6 +173,42 @@ export class InterviewBookingController {
   ) {
     const userId = req.user._id;
     return await this.interviewBookingService.acceptedToBookingInvite(
+      id,
+      userId,
+      session,
+    );
+  }
+
+  @ApiBearerAuth()
+  @Post('update-invite-users/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(MongoSessionInterceptor)
+  async InviteBookingUpdateUsers(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() inviteToBookingDto: InviteToBookingUserDto,
+    @MongoSession() session: ClientSession,
+  ) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.inviteBookingUpdateUsers(
+      id,
+      userId,
+      inviteToBookingDto,
+      session,
+    );
+  }
+
+  @ApiBearerAuth()
+  @Get('clean-invite-users/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(MongoSessionInterceptor)
+  async InviteBookingCleanUsers(
+    @Request() req,
+    @Param('id') id: string,
+    @MongoSession() session: ClientSession,
+  ) {
+    const userId = req.user._id;
+    return await this.interviewBookingService.inviteBookingCleanUsers(
       id,
       userId,
       session,

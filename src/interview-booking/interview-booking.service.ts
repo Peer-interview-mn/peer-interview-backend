@@ -4,7 +4,10 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { CreateInterviewBookingDto } from './dto/create-interview-booking.dto';
+import {
+  CreateInterviewBookingDto,
+  InviteToBookingUserDto,
+} from './dto/create-interview-booking.dto';
 import { UpdateInterviewBookingDto } from './dto/update-interview-booking.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { InterviewBooking } from '@/interview-booking/entities/interview-booking.entity';
@@ -87,15 +90,9 @@ export class InterviewBookingService {
     createInterviewBookingDto: CreateInterviewBookingDto,
     session: ClientSession,
   ) {
-    // const type =
-    //   createInterviewBookingDto.interview_type === InterviewType.FRIEND
-    //     ? InterviewType.PEERS
-    //     : InterviewType.FRIEND;
     try {
       const foundBooking = await this.interviewBookingModel.findOne({
         userId: userId,
-        // interview_type: { $ne: InterviewType.FRIEND },
-        // interview_type: { $ne: type },
         date: null,
         'invite_users.0': { $exists: false },
       });
@@ -1174,6 +1171,55 @@ export class InterviewBookingService {
         'Friend',
         matchUrl,
       );
+
+      return booking;
+    } catch (e) {
+      throw new BadRequestException(
+        `Error accepting booking invite: ${e.message}`,
+      );
+    }
+  }
+
+  async inviteBookingUpdateUsers(
+    id: string,
+    userId: string,
+    dto: InviteToBookingUserDto,
+    session: ClientSession,
+  ) {
+    try {
+      const booking = await this.interviewBookingModel.findOneAndUpdate(
+        { userId: userId, _id: id },
+        { $set: { invite_users: dto.emails } },
+        { new: true, session: session },
+      );
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      return booking;
+    } catch (e) {
+      throw new BadRequestException(
+        `Error accepting booking invite: ${e.message}`,
+      );
+    }
+  }
+
+  async inviteBookingCleanUsers(
+    id: string,
+    userId: string,
+    session: ClientSession,
+  ) {
+    try {
+      const booking = await this.interviewBookingModel.findOneAndUpdate(
+        { userId: userId, _id: id },
+        { $set: { invite_users: [] } },
+        { new: true, session: session },
+      );
+
+      if (!booking) {
+        throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
 
       return booking;
     } catch (e) {

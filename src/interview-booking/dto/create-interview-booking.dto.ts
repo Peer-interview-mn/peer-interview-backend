@@ -18,6 +18,11 @@ export class InviteToBookingDto {
   email: string;
 }
 
+export class InviteToBookingUserDto {
+  @ApiProperty({})
+  emails: string[];
+}
+
 export class InvitesToBookingDto {
   @ApiProperty({})
   @IsString({ message: 'The email must be a string array' })
