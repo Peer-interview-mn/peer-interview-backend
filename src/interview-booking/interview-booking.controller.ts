@@ -233,7 +233,12 @@ export class InterviewBookingController {
   }
 
   @Get('check-invite-url/:id/:email')
-  async checkUrl(@Param('id') id: string, @Param('email') email: string) {
-    return await this.interviewBookingService.checkUrl(id, email);
+  @UseInterceptors(MongoSessionInterceptor)
+  async checkUrl(
+    @Param('id') id: string,
+    @Param('email') email: string,
+    @MongoSession() session: ClientSession,
+  ) {
+    return await this.interviewBookingService.checkUrl(id, email, session);
   }
 }

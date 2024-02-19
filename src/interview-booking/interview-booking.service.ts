@@ -1073,12 +1073,24 @@ export class InterviewBookingService {
     }
   }
 
-  async checkUrl(id: string, email: string) {
+  async checkUrl(id: string, email: string, session: ClientSession) {
     try {
       const booking = await this.interviewBookingModel.findById(id);
 
       if (!booking) {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
+      }
+
+      const twoHoursAgo = moment().subtract(2, 'hours');
+
+      if (moment(booking.updatedAt).isBefore(twoHoursAgo)) {
+        await this.interviewBookingModel.findByIdAndDelete(id, {
+          session: session,
+        });
+        throw new HttpException(
+          'This link has expired',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       await this.checkInviteConditions(booking, email);
