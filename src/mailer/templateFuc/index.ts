@@ -2,6 +2,7 @@ export * from './AccountVerifyCode';
 export * from './ForgotPassword';
 export * from './BookingNoft';
 export * from './InviteFriend';
+export * from './InviteCurFriend';
 export * from './Meeting';
 export * from './MeetingFriend';
 export * from './DoMeeting';

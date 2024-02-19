@@ -782,69 +782,72 @@ export class InterviewBookingService {
 
         await this.mailerService.sendMatchNoft(date, booking);
 
-        const sendCalendar = await this.mailerService.createCalendarEvent(
-          'Meet calendar',
-          `Your interview calendar`,
+        const thisMomentMatch = await this.getSuggestThisMoment(
+          id,
+          userId,
           booking.date,
-          simpleUrl,
         );
 
-        await this.mailerService.sendCalendar(
-          booking.userId['email'],
-          sendCalendar,
-        );
-      }
+        if (thisMomentMatch.points.length) {
+          const myBestMoment = thisMomentMatch.points[0]?.bestCore;
+          const myBestMomentUser = thisMomentMatch.points[0]?.bestId;
+          const myBestMomentUserName = thisMomentMatch.points[0]?.bestName;
 
-      const thisMomentMatch = await this.getSuggestThisMoment(
-        id,
-        userId,
-        booking.date,
-      );
-
-      if (thisMomentMatch.points.length) {
-        const myBestMoment = thisMomentMatch.points[0]?.bestCore;
-        const myBestMomentUser = thisMomentMatch.points[0]?.bestId;
-        const myBestMomentUserName = thisMomentMatch.points[0]?.bestName;
-
-        const match = await this.matchService.create(
-          {
-            matchedUserOne: booking.userId,
-            matchedUserTwo: myBestMomentUser,
-            date: booking.date,
-            skill_type: booking.skill_type,
-            interview_type: booking.interview_type,
-          },
-          session,
-        );
-        if (match) {
-          booking.connection_userId = myBestMomentUser;
-          booking.process = InterviewBookingProcessType.MATCHED;
-          booking.meetId = match._id;
-          const meetUrl = `https://www.peerinterview.io/app/meet/${match._id}`;
-          await this.userMatchedAndSendMail(
-            myBestMoment,
-            myBestMomentUser,
-            userId,
-            match._id,
-            booking.userId['userName'],
+          const match = await this.matchService.create(
+            {
+              matchedUserOne: booking.userId,
+              matchedUserTwo: myBestMomentUser,
+              date: booking.date,
+              skill_type: booking.skill_type,
+              interview_type: booking.interview_type,
+            },
             session,
           );
+          if (match) {
+            booking.connection_userId = myBestMomentUser;
+            booking.process = InterviewBookingProcessType.MATCHED;
+            booking.meetId = match._id;
+            const meetUrl = `https://www.peerinterview.io/app/meet/${match._id}`;
+            await this.userMatchedAndSendMail(
+              myBestMoment,
+              myBestMomentUser,
+              userId,
+              match._id,
+              booking.userId['userName'],
+              session,
+            );
 
-          await this.mailerService.sendMatchedMail(
-            booking.userId['email'],
-            booking.userId['userName'],
-            myBestMomentUserName,
-            'Peer',
-            date,
-            meetUrl,
-            booking.userId['time_zone'],
-          );
+            await this.mailerService.sendMatchedMail(
+              booking.userId['email'],
+              booking.userId['userName'],
+              myBestMomentUserName,
+              'Peer',
+              date,
+              meetUrl,
+              booking.userId['time_zone'],
+            );
 
+            const sendCalendar = await this.mailerService.createCalendarEvent(
+              'Meet calendar',
+              `Your interview calendar`,
+              booking.date,
+              meetUrl,
+            );
+
+            await this.mailerService.sendCalendar(
+              booking.userId['email'],
+              sendCalendar,
+            );
+
+            await booking.save({ session });
+            return booking;
+          }
+        } else {
           const sendCalendar = await this.mailerService.createCalendarEvent(
             'Meet calendar',
             `Your interview calendar`,
             booking.date,
-            meetUrl,
+            simpleUrl,
           );
 
           await this.mailerService.sendCalendar(
@@ -853,6 +856,7 @@ export class InterviewBookingService {
           );
         }
       }
+
       await booking.save({ session });
       return booking;
     } catch (e) {
@@ -960,16 +964,11 @@ export class InterviewBookingService {
       }
 
       const invitationLink = `https://peerinterview.io/app/invite-to-meeting/${id}`;
-      const emailSent = await this.mailerService.sendMail({
-        toMail: email,
-        subject: 'Invitation to Friend to Friend Interview',
-        text: 'You have been invited to join a meeting.',
-        html: InviteFriend(invitationLink, booking.userId['userName']),
-      });
-
-      if (!emailSent) {
-        return { success: false, message: 'Failed to send invitation email.' };
-      }
+      await this.mailerService.inviteFriend(
+        email,
+        invitationLink,
+        booking.userId['userName'],
+      );
 
       booking.invite_users.push(email.toLowerCase());
       await booking.save();
@@ -1004,33 +1003,18 @@ export class InterviewBookingService {
 
       const haveUser = await this.usersService.findOne(email);
       if (haveUser) {
-        const emailSent = await this.mailerService.sendMail({
-          toMail: email,
-          subject: 'Invitation to Friend to Friend Interview',
-          text: 'You have been invited to join a meeting.',
-          html: InviteFriend(invitationLink, booking.userId['userName']),
-        });
-
-        if (!emailSent) {
-          return {
-            success: false,
-            message: 'Failed to send invitation email.',
-          };
-        }
+        await this.mailerService.inviteCurFriend(
+          email,
+          haveUser.userName,
+          invitationLink,
+          booking.userId['userName'],
+        );
       } else {
-        const emailSent = await this.mailerService.sendMail({
-          toMail: email,
-          subject: 'Invitation to Friend to Friend Interview',
-          text: 'You have been invited to join a meeting.',
-          html: InviteFriend(invitationLink, booking.userId['userName']),
-        });
-
-        if (!emailSent) {
-          return {
-            success: false,
-            message: 'Failed to send invitation email.',
-          };
-        }
+        await this.mailerService.inviteFriend(
+          email,
+          invitationLink,
+          booking.userId['userName'],
+        );
       }
 
       booking.invite_users.push(email);

@@ -7,6 +7,8 @@ import {
   Cancelled,
   ChangeMeetTime,
   DoMeetingFriend,
+  InviteCurFriend,
+  InviteFriend,
   MailForUnluckyOrSlow,
   Meeting,
   MeetingFriend,
@@ -153,6 +155,29 @@ export class MailerService {
         userHour,
         booking.skill_type,
       ),
+    });
+  }
+
+  async inviteFriend(mail: string, link: string, inviterName: string) {
+    await this.sendMail({
+      toMail: mail,
+      subject: `${inviterName} Invites You to Join a Practice Interview Session!`,
+      text: 'You have been booked meeting.',
+      html: InviteFriend(link, mail, inviterName),
+    });
+  }
+
+  async inviteCurFriend(
+    mail: string,
+    userName: string,
+    link: string,
+    inviterName: string,
+  ) {
+    await this.sendMail({
+      toMail: mail,
+      subject: `Interview Invitation from ${inviterName}`,
+      text: 'You have been booked meeting.',
+      html: InviteCurFriend(link, userName, inviterName),
     });
   }
 
