@@ -331,7 +331,12 @@ export class AuthService {
         );
       }
 
-      if (!user.password) {
+      if (
+        !user.password &&
+        !user.userName &&
+        !user.firstName &&
+        !user.lastName
+      ) {
         throw new HttpException(
           `This account very fresh!`,
           HttpStatus.BAD_REQUEST,

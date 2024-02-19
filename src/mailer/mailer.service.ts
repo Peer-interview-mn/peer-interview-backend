@@ -46,11 +46,13 @@ export class MailerService {
         subject: subject,
         text: text,
         html: html,
-        alternatives: {
-          contentType: 'text/calendar; charset="utf-8"; method=REQUEST',
-          method: 'REQUEST',
-          content: iCalContent,
-        },
+        ...(iCalContent && {
+          alternatives: {
+            contentType: 'text/calendar; charset="utf-8"; method=REQUEST',
+            method: 'REQUEST',
+            content: iCalContent,
+          },
+        }),
       });
 
       return send;

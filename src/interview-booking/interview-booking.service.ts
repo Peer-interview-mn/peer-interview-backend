@@ -238,10 +238,10 @@ export class InterviewBookingService {
     try {
       await this.updateProcessMe(id);
 
-      const totalPolls = await this.interviewBookingModel.countDocuments(
+      const totalBooking = await this.interviewBookingModel.countDocuments(
         options,
       );
-      const totalPages = Math.ceil(totalPolls / limit);
+      const totalPages = Math.ceil(Math.max(0, totalBooking) / limit);
 
       const booking = await this.interviewBookingModel
         .find(options, select)
@@ -279,10 +279,10 @@ export class InterviewBookingService {
     try {
       await this.updateProcessMe(id);
 
-      const totalPolls = await this.interviewBookingModel.countDocuments(
+      const totalBooking = await this.interviewBookingModel.countDocuments(
         options,
       );
-      const totalPages = Math.ceil(totalPolls / limit);
+      const totalPages = Math.ceil(Math.max(0, totalBooking) / limit);
 
       const booking = await this.interviewBookingModel
         .find(options, select)
