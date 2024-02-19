@@ -274,7 +274,7 @@ export class UsersService {
       'skills',
       'role',
       'country',
-      'interview_skill',
+      // 'interview_skill',
     ];
     const user = await this.userModel.findById(id);
     if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
