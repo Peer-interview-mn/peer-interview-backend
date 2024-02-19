@@ -143,16 +143,15 @@ export class MailerService {
   async sendMatchNoft(date: Date, booking: InterviewBooking) {
     const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
     const userHour = userDate.format('hh:mm A');
-    const simpleUrl = 'https://www.peerinterview.io/app';
     await this.sendMail({
       toMail: booking.userId['email'],
-      subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
+      subject: `Your Interview Session is Booked!`,
       text: 'You have been booked meeting.',
       html: BookingNotification(
         booking.userId['userName'],
         userDate.format('MMMM DD, YYYY'),
         userHour,
-        simpleUrl,
+        booking.skill_type,
       ),
     });
   }

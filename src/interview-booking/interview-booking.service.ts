@@ -91,6 +91,10 @@ export class InterviewBookingService {
     session: ClientSession,
   ) {
     try {
+      const permission = await this.usersService.checkFields(userId);
+      if (!permission) {
+        throw new HttpException('Set up your profile!', HttpStatus.BAD_REQUEST);
+      }
       const foundBooking = await this.interviewBookingModel.findOne({
         userId: userId,
         date: null,
@@ -767,7 +771,6 @@ export class InterviewBookingService {
         await this.helpsToCheckDate(id, date, userId);
 
         const desiredHour = moment.tz(date, 'UTC').get('hour');
-        const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
         booking.date = date;
         booking.time = desiredHour;
 
@@ -775,20 +778,9 @@ export class InterviewBookingService {
           booking.process = InterviewBookingProcessType.PENDING;
         }
 
-        const userHour = userDate.format('hh:mm A');
         const simpleUrl = 'https://www.peerinterview.io/app';
 
-        await this.mailerService.sendMail({
-          toMail: booking.userId['email'],
-          subject: `Confirmation and Details for Peer-to-Peer ${booking.skill_type} Skill`,
-          text: 'You have been booked meeting.',
-          html: BookingNotification(
-            booking.userId['userName'],
-            userDate.format('MMMM DD, YYYY'),
-            userHour,
-            simpleUrl,
-          ),
-        });
+        await this.mailerService.sendMatchNoft(date, booking);
 
         const sendCalendar = await this.mailerService.createCalendarEvent(
           'Meet calendar',
@@ -1008,17 +1000,37 @@ export class InterviewBookingService {
           HttpStatus.BAD_GATEWAY,
         );
       }
-
       const invitationLink = `https://peerinterview.io/app/invite-to-meeting/${id}`;
-      const emailSent = await this.mailerService.sendMail({
-        toMail: email,
-        subject: 'Invitation to Friend to Friend Interview',
-        text: 'You have been invited to join a meeting.',
-        html: InviteFriend(invitationLink, booking.userId['userName']),
-      });
 
-      if (!emailSent) {
-        return { success: false, message: 'Failed to send invitation email.' };
+      const haveUser = await this.usersService.findOne(email);
+      if (haveUser) {
+        const emailSent = await this.mailerService.sendMail({
+          toMail: email,
+          subject: 'Invitation to Friend to Friend Interview',
+          text: 'You have been invited to join a meeting.',
+          html: InviteFriend(invitationLink, booking.userId['userName']),
+        });
+
+        if (!emailSent) {
+          return {
+            success: false,
+            message: 'Failed to send invitation email.',
+          };
+        }
+      } else {
+        const emailSent = await this.mailerService.sendMail({
+          toMail: email,
+          subject: 'Invitation to Friend to Friend Interview',
+          text: 'You have been invited to join a meeting.',
+          html: InviteFriend(invitationLink, booking.userId['userName']),
+        });
+
+        if (!emailSent) {
+          return {
+            success: false,
+            message: 'Failed to send invitation email.',
+          };
+        }
       }
 
       booking.invite_users.push(email);
