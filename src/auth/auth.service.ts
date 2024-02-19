@@ -324,6 +324,20 @@ export class AuthService {
         );
       }
 
+      if (!user.verifyAccount) {
+        throw new HttpException(
+          `This account has not been verified!`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (!user.password) {
+        throw new HttpException(
+          `This account very fresh!`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const resetToken = await this.otpService.createCode(
         user._id,
         OtpCodeType.RESETPASSWORD,
