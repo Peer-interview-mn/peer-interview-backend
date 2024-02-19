@@ -279,11 +279,7 @@ export class UsersService {
     const user = await this.userModel.findById(id);
     if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND);
     for (const field of requiredFields) {
-      if (
-        !user[field] ||
-        !user['skills'].length ||
-        !user['interview_skill'].length
-      ) {
+      if (!user[field] || !user['skills'].length) {
         return false;
       }
     }
