@@ -91,20 +91,25 @@ export class AuthService {
 
   async registerNew(createAuthInput: CreateAuthInputNew) {
     const { email } = createAuthInput;
-
-    const haveUser = await this.usersService.findOne(email);
-
-    if (haveUser) {
-      throw new HttpException(
-        `this ${email} mail already exists`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     try {
-      const newUser = await this.usersService.createNew(createAuthInput);
-      if (newUser) return newUser;
-      throw new HttpException('Something went wrong', HttpStatus.NOT_FOUND);
+      const haveUser = await this.usersService.findOne(email);
+
+      if (haveUser) {
+        if (haveUser.verifyAccount) {
+          throw new HttpException(
+            `this ${email} mail already exists`,
+            HttpStatus.BAD_REQUEST,
+          );
+        } else {
+          return haveUser;
+        }
+      } else {
+        const newUser = await this.usersService.createNew(createAuthInput);
+        if (newUser) {
+          return newUser;
+        }
+        throw new HttpException('Something went wrong', HttpStatus.NOT_FOUND);
+      }
     } catch (e) {
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
@@ -112,27 +117,25 @@ export class AuthService {
 
   async register(createAuthInput: CreateAuthInput) {
     const { userName, email } = createAuthInput;
-
-    const haveUser = await this.usersService.findOne(email);
-    const haveUserName = await this.usersService.findByFields({
-      userName: userName,
-    });
-
-    if (haveUser) {
-      throw new HttpException(
-        `this ${email} mail already exists`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (haveUserName) {
-      throw new HttpException(
-        `this ${userName} username already exists`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     try {
+      const haveUser = await this.usersService.findOne(email);
+      const haveUserName = await this.usersService.findByFields({
+        userName: userName,
+      });
+
+      if (haveUser) {
+        throw new HttpException(
+          `this ${email} mail already exists`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (haveUserName) {
+        throw new HttpException(
+          `this ${userName} username already exists`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       const newUser = await this.usersService.create(createAuthInput);
       if (newUser) return newUser;
       throw new HttpException('Something went wrong', HttpStatus.NOT_FOUND);
