@@ -6,7 +6,7 @@ export const MeetingFriend = (
   return `
     <div>
         Dear <b>${userName}</b> <br><br>
-        Your friend ${friendName} accepted your invitation of  the Peer-to-Friend Hard Skill Interview, has made our upcoming session even more promising.
+        Your friend <b>${friendName}</b> accepted your invitation of  the Peer-to-Friend Hard Skill Interview, has made our upcoming session even more promising.
         <br><br>
         <b>Here are the interview details:</b>
         <ul>

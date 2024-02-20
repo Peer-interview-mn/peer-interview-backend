@@ -19,7 +19,6 @@ import {
 } from '@/interview-booking/enums/index.enum';
 import { MailerService } from '@/mailer/mailer.service';
 import { UsersService } from '@/users/users.service';
-import { BookingNotification, InviteFriend } from '@/mailer/templateFuc';
 import { MatchService } from '@/match/match.service';
 
 const { ObjectId } = Types;
