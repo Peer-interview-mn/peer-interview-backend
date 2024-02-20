@@ -6,7 +6,9 @@ import {
   BookingNotification,
   Cancelled,
   ChangeMeetTime,
+  DisconnectedMeet,
   DoMeetingFriend,
+  IgnoreInv,
   InviteCurFriend,
   InviteFriend,
   MailForUnluckyOrSlow,
@@ -142,7 +144,7 @@ export class MailerService {
     });
   }
 
-  async sendMatchNoft(date: Date, booking: InterviewBooking) {
+  async sendMatchNoft(date: Date, booking: InterviewBooking, content: any) {
     const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
     const userHour = userDate.format('hh:mm A');
     await this.sendMail({
@@ -155,6 +157,7 @@ export class MailerService {
         userHour,
         booking.skill_type,
       ),
+      iCalContent: content,
     });
   }
 
@@ -199,6 +202,31 @@ export class MailerService {
     });
   }
 
+  async disConnect(date: Date, booking: InterviewBooking, name: string) {
+    const userDate = moment.tz(date, booking.userId['time_zone'] || 'UTC');
+    const userHour = userDate.format('hh:mm A');
+    await this.sendMail({
+      toMail: booking.userId['email'],
+      subject: `Disconnected match detail`,
+      text: 'You have been booked meeting.',
+      html: DisconnectedMeet(
+        booking.userId['userName'],
+        name,
+        userDate.format('MMMM DD, YYYY'),
+        userHour,
+      ),
+    });
+  }
+
+  async ignoreInvite(email: string, name: string, fMail: string) {
+    await this.sendMail({
+      toMail: email,
+      subject: `Reject invitation`,
+      text: 'You have been booked meeting.',
+      html: IgnoreInv(name, fMail),
+    });
+  }
+
   async changeMeetTimeFriend(date: Date, booking: InterviewBooking) {
     const userDate = moment.tz(
       date,
@@ -228,6 +256,7 @@ export class MailerService {
     date: Date,
     link: string,
     timeZone: string,
+    content: any,
   ) {
     const userDate = moment.tz(date, timeZone || 'UTC');
     const userHour = userDate.format('hh:mm A');
@@ -245,6 +274,7 @@ export class MailerService {
         userHour,
         link,
       ),
+      iCalContent: content,
     });
   }
 
@@ -277,6 +307,7 @@ export class MailerService {
     userName: string,
     date: Date,
     timeZone: string,
+    delUser: string,
   ) {
     const userDate = moment.tz(date, timeZone || 'UTC');
     const userHour = userDate.format('hh:mm A');
@@ -286,7 +317,7 @@ export class MailerService {
       toMail: email,
       subject: `Details of canceled interview`,
       text: 'You have been unlucky',
-      html: Cancelled(userName, forDate, userHour),
+      html: Cancelled(userName, forDate, userHour, delUser),
     });
   }
 

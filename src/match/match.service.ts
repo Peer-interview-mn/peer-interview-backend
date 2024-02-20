@@ -66,6 +66,27 @@ export class MatchService {
     return match;
   }
 
+  async deleteMatch(id: string, userId: string, session: ClientSession) {
+    const match = await this.matchModel
+      .findOneAndDelete(
+        {
+          _id: id,
+          $or: [{ matchedUserOne: userId }, { matchedUserTwo: userId }],
+        },
+        { session: session },
+      )
+      .exec();
+
+    if (!match) {
+      throw new HttpException(
+        'This interview booking cannot be changed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return match;
+  }
+
   async updateDate(
     id: string,
     userId: string,
@@ -108,13 +129,16 @@ export class MatchService {
         throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST);
       }
 
-      const delBooking = await this.interviewBookingModel.findOneAndDelete(
-        {
-          meetId: id,
-          userId: userId,
-        },
-        { session: session },
-      );
+      const delBooking = await this.interviewBookingModel
+        .findOneAndDelete(
+          {
+            meetId: id,
+            userId: userId,
+          },
+          { session: session },
+        )
+        .populate({ path: 'userId', select: 'userName email time_zone' })
+        .exec();
 
       if (!delBooking) {
         throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST);
@@ -125,7 +149,8 @@ export class MatchService {
           meetId: id,
           userId: delBooking.connection_userId,
         })
-        .populate({ path: 'userId', select: 'userName email time_zone' });
+        .populate({ path: 'userId', select: 'userName email time_zone' })
+        .exec();
 
       if (!rejectBooking) {
         throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST);
@@ -142,6 +167,7 @@ export class MatchService {
         rejectBooking.userId['userName'],
         rejectBooking.date,
         rejectBooking.userId['time_zone'],
+        delBooking.userId['userName'],
       );
 
       return cMatch;

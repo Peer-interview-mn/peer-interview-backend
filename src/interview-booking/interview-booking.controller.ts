@@ -114,9 +114,21 @@ export class InterviewBookingController {
     @MongoSession() session: ClientSession,
   ) {
     const userId = req.user._id;
-    return await this.interviewBookingService.update(
-      userId,
+    const check = await this.interviewBookingService.checkMatchedInterview(
       id,
+      userId,
+    );
+    if (!check) {
+      return await this.interviewBookingService.update(
+        userId,
+        id,
+        updateInterviewBookingDto,
+        session,
+      );
+    }
+    return await this.interviewBookingService.updateMatchedBooking(
+      id,
+      userId,
       updateInterviewBookingDto,
       session,
     );
