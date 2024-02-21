@@ -952,7 +952,7 @@ export class InterviewBookingService {
         );
       }
 
-      const invitationLink = `https://peerinterview.io/app/invite-to-meeting/${id}`;
+      const invitationLink = `https://peerinterview.io/app?inviteId=${id}`;
       await this.mailerService.inviteFriend(
         email,
         invitationLink,
@@ -988,7 +988,7 @@ export class InterviewBookingService {
           HttpStatus.BAD_GATEWAY,
         );
       }
-      const invitationLink = `https://peerinterview.io/app/invite-to-meeting/${id}`;
+      const invitationLink = `https://peerinterview.io/app?inviteId=${id}`;
 
       const haveUser = await this.usersService.findOne(email);
       if (haveUser) {
