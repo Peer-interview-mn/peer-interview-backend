@@ -982,6 +982,13 @@ export class InterviewBookingService {
         throw new HttpException('Booking not found', HttpStatus.NOT_FOUND);
       }
 
+      if (booking.userId['email'].toLowerCase() === email.toLowerCase()) {
+        throw new HttpException(
+          'You cannot invite yourself',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+
       if (booking.invite_users.length > 1) {
         throw new HttpException(
           'Friend invite limit reached. You can only invite one people',
