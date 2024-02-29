@@ -32,6 +32,7 @@ export class InterviewBookingController {
     private readonly interviewBookingService: InterviewBookingService,
   ) {}
 
+  // create interview booking. any type and update
   @ApiBearerAuth()
   @Post()
   @UseInterceptors(MongoSessionInterceptor)
@@ -49,11 +50,13 @@ export class InterviewBookingController {
     );
   }
 
+  // get all interview booking
   @Get()
   async findAll(@Query() query: Record<string, any>) {
     return await this.interviewBookingService.findAll(query);
   }
 
+  // get all interview logged in user
   @ApiBearerAuth()
   @Get('list/me')
   @UseGuards(AuthGuard('jwt'))
@@ -62,6 +65,7 @@ export class InterviewBookingController {
     return await this.interviewBookingService.findMe(userId, query);
   }
 
+  // get all interview request logged in user
   @ApiBearerAuth()
   @Get('list/request/me')
   @UseGuards(AuthGuard('jwt'))
@@ -142,6 +146,7 @@ export class InterviewBookingController {
     return await this.interviewBookingService.remove(userId, id);
   }
 
+  // now not used
   @ApiBearerAuth()
   @Post('invite-to-interview-booking/:id')
   @UseGuards(AuthGuard('jwt'))
@@ -158,6 +163,7 @@ export class InterviewBookingController {
     );
   }
 
+  // invite friend
   @ApiBearerAuth()
   @Post('v1/invite-to-interview-booking/:id')
   @UseGuards(AuthGuard('jwt'))
@@ -174,6 +180,7 @@ export class InterviewBookingController {
     );
   }
 
+  // accept interview invite
   @ApiBearerAuth()
   @Post('accept-to-booking-invite/:id')
   @UseGuards(AuthGuard('jwt'))
@@ -210,6 +217,7 @@ export class InterviewBookingController {
     );
   }
 
+  // you cancel all your invitation this interview
   @ApiBearerAuth()
   @Get('clean-invite-users/:id')
   @UseGuards(AuthGuard('jwt'))
@@ -227,6 +235,7 @@ export class InterviewBookingController {
     );
   }
 
+  // decline the invitation
   @ApiBearerAuth()
   @Get('cancel-invite-request/:id')
   @UseGuards(AuthGuard('jwt'))

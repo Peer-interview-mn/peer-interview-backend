@@ -33,6 +33,7 @@ export class InterviewBookingService {
     private matchService: MatchService,
   ) {}
 
+  // maybe this is main logic. It will help to check whether it is possible to make an interview booking or not.
   async helpsToCheckDate(id: string, date: Date, userId: string) {
     const baseMoment = moment.tz(date, 'UTC');
     const twoHoursBefore = baseMoment.clone().subtract(2, 'hours');
@@ -308,6 +309,7 @@ export class InterviewBookingService {
     }
   }
 
+  // suggest best match
   async suggestMe(id: string, userId: string, time: string) {
     const baseMoment = moment.tz(time, 'UTC');
     try {
@@ -391,6 +393,7 @@ export class InterviewBookingService {
     }
   }
 
+  // suggest best match
   async getSuggestTimeByDay(id: string, userId: string, date: string) {
     const selectedDate = moment.tz(date, 'UTC');
     const startOfDay = selectedDate.clone().startOf('day');
@@ -479,6 +482,7 @@ export class InterviewBookingService {
     }
   }
 
+  // suggest best match
   async getSuggestThisMoment(id: string, userId: string, date: Date) {
     const selectedDate = moment.tz(date, 'UTC');
 
@@ -562,6 +566,7 @@ export class InterviewBookingService {
     }
   }
 
+  // calculate and get best match
   async calculateMatchScore(compareData: InterviewBooking, data: any[]) {
     if (!data.length) return [];
 

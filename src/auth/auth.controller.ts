@@ -49,7 +49,7 @@ export class AuthController {
     return await this.authService.sendVerifyCodeToMail(mail);
   }
 
-  // account confirm
+  // confirm account
   @Post('confirm-account')
   async confirmAccount(@Body() mailInput: EmailInput) {
     return await this.authService.confirmAccount(mailInput);

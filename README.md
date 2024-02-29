@@ -1,3 +1,4 @@
+## Check code comment
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
@@ -16,20 +17,33 @@ touch .env
 ```
 setup environment: copy to .env
 ```bash
+AWS_ACCESS=###
+AWS_SECRET=###
+AWS_REGION=###
+
+AWS_S3_BUCKET=###
+
 PORT=8000
 
-#MONGO_URI=mongodb://root:root@localhost:27001
-MONGO_URI=mongodb+srv://dashmandalsaikhanbileg:amazon@testamazon.4lbhbua.mongodb.net/interview?retryWrites=true&w=majority
+MONGO_URI=###
 
-JWT_SECRET=peer_interview_3982fc1a
-JWT_EXPRIRESIN=7d
+JWT_SECRET=###
+JWT_EXPRIRESIN=1h
 
-SMTP_HOST=sandbox.smtp.mailtrap.io
-SMTP_PORT=2525
-SMTP_USER=0041ae855fbe0d
-SMTP_PASSWORD=f7cde9aad7cff8
+REF_SECRET=###
+REF_EXPRIRESIN=7d
 
-HOSTMAIL=peer@interview.io
+#aws
+SMTP_HOST=###
+SMTP_PORT=###
+IAM_USER=###
+SMTP_USER=###
+SMTP_PASSWORD=###
+HOSTMAIL=###
+
+GOOGLE_ID=###
+GOOGLE_SECRET=###
+GOOGLE_CALLBACK_URL=###
 
 ```
 

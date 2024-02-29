@@ -73,6 +73,7 @@ export class UsersController {
     return await this.usersService.updateNew(userId, updateUserInput);
   }
 
+  // user change password
   @ApiBearerAuth()
   @Patch('change-password')
   @UseGuards(AuthGuard('jwt'))
@@ -84,6 +85,7 @@ export class UsersController {
     return await this.usersService.changePass(userId, changePassInput);
   }
 
+  // delete logged in user
   @ApiBearerAuth()
   @Delete('me')
   @UseGuards(AuthGuard('jwt'))

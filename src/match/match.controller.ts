@@ -20,6 +20,7 @@ import { ClientSession } from 'mongoose';
 export class MatchController {
   constructor(private readonly matchService: MatchService) {}
 
+  // get matching customer interview
   @ApiBearerAuth()
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
@@ -28,6 +29,7 @@ export class MatchController {
     return await this.matchService.findOne(id, userId);
   }
 
+  // cancel the meeting interview
   @ApiBearerAuth()
   @Delete('cancel/:id')
   @UseInterceptors(MongoSessionInterceptor)
@@ -41,6 +43,7 @@ export class MatchController {
     return await this.matchService.cancelMatch(id, userId, session);
   }
 
+  // get all meeting
   @Get()
   async findAll(@Query() query: Record<string, any>) {
     return await this.matchService.findAll(query);
