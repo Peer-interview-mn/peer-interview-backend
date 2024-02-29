@@ -1,0 +1,26 @@
+URI: OpenAI API - https://openai.com/blog/openai-api
+
+Research API - OpenAI GPT-4, Turbo, or 3.5
+
+1k token = Prices are per 1,000 tokens. Tokens represent pieces of words, where 1,000 tokens approximate 750 words. For instance, this paragraph is 35 tokens.
+Cost Pricing:
+
+GPT-4 Turbo:
+Input: $0.01/1k token
+Output: $0.03/1k token
+Image Generation (150x150px): $0.00255
+GPT-4:
+Input: $0.03-$0.06/1k token
+Output: $0.06-$0.12/1k token
+GPT-3.5:
+Input: $0.0005-$0.0015/1k token
+Output: $0.0015-$0.0020/1k token
+Note: This version does not learn.
+Problem:
+We require long-term memory, which is a significant challenge. Financial resources and advanced algorithms are key to addressing this issue. Hence, substantial investment in artificial intelligence is likely. The fundamental issue lies in developing an AI model capable of long-term memory retention.
+
+Solution Suggestion:
+To address this, consider storing questions in a database to prevent redundancy and overlap when querying users. Handle problem-solving at the database query level, minimizing reliance on artificial intelligence solely for answering queries.
+
+Recommendation:
+Consider utilizing the BARD API or training a model tailored to address the long-term memory challenge effectively.

@@ -1,4 +1,6 @@
-## Check code comment
+## Check code comment and read ./ImportantTip.txt
+## Nestjs and aws project.
+## Deployment: github ci cd with docker, aws ec2. switch docker hub and container
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
