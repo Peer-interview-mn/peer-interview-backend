@@ -15,6 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 export class FileUploadController {
   constructor(private readonly fileUploadService: FileUploadService) {}
 
+  // upload to aws any file
   @ApiBearerAuth()
   @Post()
   @UseGuards(AuthGuard('jwt'))

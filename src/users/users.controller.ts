@@ -22,11 +22,13 @@ import { AuthGuard } from '@nestjs/passport';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // get all users
   @Get('')
   async findAll() {
     return await this.usersService.findAll();
   }
 
+  // get login user profile
   @ApiBearerAuth()
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
@@ -35,6 +37,7 @@ export class UsersController {
     return await this.usersService.me(userId);
   }
 
+  // Make sure the required fields are filled in
   @ApiBearerAuth()
   @Get('checkFields')
   @UseGuards(AuthGuard('jwt'))
@@ -43,11 +46,13 @@ export class UsersController {
     return await this.usersService.checkFields(userId);
   }
 
+  // find user in username
   @Get(':userName')
   async findName(@Param('userName') userName: string) {
     return await this.usersService.findByUserName(userName);
   }
 
+  // update profile. now not used
   @ApiBearerAuth()
   @Patch('updateProfile')
   @UseGuards(AuthGuard('jwt'))
@@ -56,6 +61,7 @@ export class UsersController {
     return await this.usersService.update(userId, updateUserInput);
   }
 
+  // update profile. now use
   @ApiBearerAuth()
   @Patch('v1/updateProfile')
   @UseGuards(AuthGuard('jwt'))
